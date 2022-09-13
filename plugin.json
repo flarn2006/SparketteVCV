@@ -14,30 +14,30 @@
   "changelogUrl": "",
   "modules": [
     {
-	  "slug": "QAEngineer",
-	  "name": "QA Engineer",
-	  "description": "Multiplies voltages beyond 10V. Also outputs infinity, negative infinity, and NaN, in case you feel like ordering a lizard.",
-	  "tags": [
-	    "Utility",
-		"Polyphonic"
-	  ]
-	},
-	{
-	  "slug": "Ellie",
-	  "name": "Ellie",
-	  "description": "Ellie is hiding on your rack as a blank panel!",
-	  "tags": [
-	    "Blank"
-	  ]
-	},
-	{
-	  "slug": "NoteClassifier",
-	  "name": "Note Classifier",
-	  "description": "Classifies the pitch of an incoming note (C, D, etc.) and turns on a different output for each pitch.",
-	  "tags": [
-	    "Utility",
-		"Polyphonic"
-	  ]
-	}
+    "slug": "QAEngineer",
+    "name": "QA Engineer",
+    "description": "Multiplies voltages beyond 10V. Also outputs infinity, negative infinity, and NaN, in case you feel like ordering a lizard.",
+    "tags": [
+      "Utility",
+    "Polyphonic"
+    ]
+  },
+  {
+    "slug": "Ellie",
+    "name": "Ellie",
+    "description": "Ellie is hiding on your rack as a blank panel!",
+    "tags": [
+      "Blank"
+    ]
+  },
+  {
+    "slug": "NoteClassifier",
+    "name": "Note Classifier",
+    "description": "Classifies the pitch of an incoming note (C, D, etc.) and turns on a different output for each pitch.",
+    "tags": [
+      "Utility",
+    "Polyphonic"
+    ]
+  }
   ]
 }

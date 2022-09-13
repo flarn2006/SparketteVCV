@@ -3,7 +3,7 @@
   "name": "Sparkette's Stuff",
   "version": "2.0.0",
   "license": "GPL-3.0-or-later",
-  "brand": "Sparkette's",
+  "brand": "Sparkette's Stuff",
   "author": "Sara Sparks",
   "authorEmail": "flarn2006@gmail.com",
   "authorUrl": "",
@@ -12,5 +12,32 @@
   "sourceUrl": "https://github.com/flarn2006/SparketteVCV",
   "donateUrl": "https://venmo.com/flarn2006",
   "changelogUrl": "",
-  "modules": []
+  "modules": [
+    {
+	  "slug": "QAEngineer",
+	  "name": "QA Engineer",
+	  "description": "Multiplies voltages beyond 10V. Also outputs infinity, negative infinity, and NaN, in case you feel like ordering a lizard.",
+	  "tags": [
+	    "Utility",
+		"Polyphonic"
+	  ]
+	},
+	{
+	  "slug": "Ellie",
+	  "name": "Ellie",
+	  "description": "Ellie is hiding on your rack as a blank panel!",
+	  "tags": [
+	    "Blank"
+	  ]
+	},
+	{
+	  "slug": "NoteClassifier",
+	  "name": "Note Classifier",
+	  "description": "Classifies the pitch of an incoming note (C, D, etc.) and turns on a different output for each pitch.",
+	  "tags": [
+	    "Utility",
+		"Polyphonic"
+	  ]
+	}
+  ]
 }

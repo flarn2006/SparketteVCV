@@ -1,0 +1,16 @@
+{
+  "slug": "Sparkette",
+  "name": "Sparkette's Stuff",
+  "version": "2.0.0",
+  "license": "GPL-3.0-or-later",
+  "brand": "Sparkette's",
+  "author": "Sara Sparks",
+  "authorEmail": "flarn2006@gmail.com",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "https://github.com/flarn2006/SparketteVCV",
+  "donateUrl": "https://venmo.com/flarn2006",
+  "changelogUrl": "",
+  "modules": []
+}

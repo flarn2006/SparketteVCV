@@ -42,7 +42,7 @@
     {
       "slug": "PolyRepeater",
       "name": "Polyphonic Repeater",
-      "description": "Converts a monophonic signal to a polyphonic signal where all channels have the same value.",
+      "description": "Converts a monophonic signal to a polyphonic signal where all channels have the same value. Outputs up to four copies of the polyphonic signal, because I had room for extra ports so why not?",
       "tags": [
         "Polyphonic",
         "Utility"

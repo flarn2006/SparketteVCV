@@ -12,3 +12,4 @@ extern Plugin* pluginInstance;
 extern Model* modelQAEngineer;
 extern Model* modelEllie;
 extern Model* modelNoteClassifier;
+extern Model* modelPolyRepeater;

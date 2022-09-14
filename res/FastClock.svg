@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="15.24mm"
+   height="128.5mm"
+   viewBox="0 0 15.24 128.5"
+   version="1.1"
+   id="svg1524"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14, custom)"
+   sodipodi:docname="FastClock.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1526"
+     pagecolor="#cccccc"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="true"
+     units="in"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.4417977"
+     inkscape:cx="-13.871571"
+     inkscape:cy="260.78554"
+     inkscape:window-width="1920"
+     inkscape:window-height="1004"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer3">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1608"
+       originx="7.6200001"
+       originy="64.250002"
+       units="mm"
+       spacingx="2.5400001"
+       spacingy="2.5400001" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1521" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Background"
+     sodipodi:insensitive="true">
+    <rect
+       style="display:inline;fill:#ffd42a;stroke-width:0.226364"
+       id="rect374"
+       width="15.24"
+       height="128.5"
+       x="0"
+       y="0" />
+  </g>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:8.46667px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#806600;fill-opacity:1;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="28.690001"
+       y="-2.9175086"
+       id="text1674"
+       transform="rotate(90)"><tspan
+         sodipodi:role="line"
+         id="tspan1672"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P';fill:#806600;fill-opacity:1;stroke:none;stroke-width:0.264583px"
+         x="28.690001"
+         y="-2.9175086">FAST CLOCK</tspan></text>
+  </g>
+  <g
+     inkscape:label="Layer 1 copy"
+     inkscape:groupmode="layer"
+     id="g2093">
+    <g
+       aria-label="FAST CLOCK"
+       transform="rotate(90,-1.3229166,1.3229166)"
+       id="text2091"
+       style="font-size:8.46667px;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#806600;stroke-width:0.264583px">
+      <path
+         d="m 28.690001,-7.6800105 v -3.7041685 h 3.704168 3.704168 v 0.529167 0.529167 h -2.645835 -2.645834 v 1.0583339 1.0583337 h 2.116668 2.116667 v 0.5291669 0.5291669 h -2.116667 -2.116668 v 1.5875006 1.5875006 h -1.058334 -1.058333 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2095" />
+      <path
+         d="m 39.273338,-10.855012 v -0.529167 h 1.587501 1.5875 v 0.529167 0.529167 h 0.529167 0.529167 v 0.529167 0.5291669 h 0.529167 0.529167 v 2.6458344 2.6458343 h -1.058334 -1.058334 v -1.0583337 -1.0583338 h -1.5875 -1.587501 v 1.0583338 1.0583337 h -1.058334 -1.058333 v -2.6458343 -2.6458344 h 0.529166 0.529167 v -0.5291669 -0.529167 h 0.529167 0.529167 z m 2.116668,1.058334 v -0.529167 h -0.529167 -0.529167 v 0.529167 0.5291669 h -0.529167 -0.529167 v 1.0583337 1.0583338 h 1.587501 1.5875 v -1.0583338 -1.0583337 h -0.529167 -0.529166 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2097" />
+      <path
+         d="m 46.681674,-10.855012 v -0.529167 h 2.116668 2.116667 v 0.529167 0.529167 h 0.529167 0.529167 v 0.529167 0.5291669 h -1.058334 -1.058333 v -0.5291669 -0.529167 h -1.058334 -1.058334 v 1.0583339 1.0583337 h 2.116668 2.116667 v 0.5291669 0.5291669 h 0.529167 0.529167 v 1.0583337 1.0583338 H 52.50251 51.973343 v 0.5291669 0.5291668 H 49.327509 46.681674 V -4.5050092 -5.0341761 H 46.152507 45.623341 V -5.563343 -6.0925099 h 1.058333 1.058334 v 0.5291669 0.5291669 h 1.587501 1.5875 v -1.0583338 -1.0583337 h -2.116667 -2.116668 v -0.5291669 -0.5291669 h -0.529167 -0.529166 v -1.0583337 -1.0583339 h 0.529166 0.529167 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2099" />
+      <path
+         d="m 55.148343,-10.855012 v -0.529167 h 3.175002 3.175001 v 0.529167 0.529167 h -1.058334 -1.058334 v 3.1750014 3.1750012 h -1.058333 -1.058334 v -3.1750012 -3.1750014 h -1.058334 -1.058334 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2101" />
+      <path
+         d="m 73.140019,-10.855012 v -0.529167 h 2.116668 2.116667 v 0.529167 0.529167 h 0.529167 0.529167 v 0.529167 0.5291669 H 77.373354 76.31502 v -0.5291669 -0.529167 h -1.058333 -1.058334 v 0.529167 0.5291669 h -0.529167 -0.529167 v 1.5875006 1.5875006 h 0.529167 0.529167 v 0.5291669 0.5291669 h 1.058334 1.058333 V -5.563343 -6.0925099 h 1.058334 1.058334 v 0.5291669 0.5291669 h -0.529167 -0.529167 v 0.5291669 0.5291668 H 75.256687 73.140019 V -4.5050092 -5.0341761 H 72.610852 72.081685 V -5.563343 -6.0925099 h -0.529166 -0.529167 v -1.5875006 -1.5875006 h 0.529167 0.529166 v -0.5291669 -0.529167 h 0.529167 0.529167 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2103" />
+      <path
+         d="m 80.548353,-7.6800105 v -3.7041685 h 1.058333 1.058334 v 3.1750016 3.1750013 h 2.116668 2.116667 v 0.5291669 0.5291668 h -3.175001 -3.175001 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2105" />
+      <path
+         d="m 89.015024,-10.855012 v -0.529167 h 2.645834 2.645834 v 0.529167 0.529167 h 0.529167 0.529167 v 2.6458345 2.6458344 h -0.529167 -0.529167 v 0.5291669 0.5291668 H 91.660858 89.015024 V -4.5050092 -5.0341761 H 88.485857 87.95669 v -2.6458344 -2.6458345 h 0.529167 0.529167 z m 4.233335,3.1750015 v -2.6458345 h -1.587501 -1.587501 v 2.6458345 2.6458344 h 1.587501 1.587501 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2107" />
+      <path
+         d="m 98.540028,-10.855012 v -0.529167 h 2.116672 2.11666 v 0.529167 0.529167 h 0.52917 0.52917 v 0.529167 0.5291669 h -1.05834 -1.05833 v -0.5291669 -0.529167 h -1.05833 -1.058338 v 0.529167 0.5291669 h -0.529167 -0.529167 v 1.5875006 1.5875006 h 0.529167 0.529167 v 0.5291669 0.5291669 h 1.058338 1.05833 V -5.563343 -6.0925099 h 1.05833 1.05834 v 0.5291669 0.5291669 h -0.52917 -0.52917 v 0.5291669 0.5291668 H 100.6567 98.540028 V -4.5050092 -5.0341761 H 98.010861 97.481695 V -5.563343 -6.0925099 h -0.529167 -0.529167 v -1.5875006 -1.5875006 h 0.529167 0.529167 v -0.5291669 -0.529167 h 0.529166 0.529167 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2109" />
+      <path
+         d="m 104.89003,-7.6800105 v -3.7041685 h 1.05833 1.05834 v 1.587501 1.5875006 h 0.52916 0.52917 v -0.5291669 -0.5291668 h 0.52917 0.52916 v -0.5291669 -0.529167 h 0.52917 0.52917 v -0.529167 -0.529167 h 1.05833 1.05833 v 0.529167 0.529167 h -0.52916 -0.52917 v 0.529167 0.5291669 h -0.52917 -0.52916 v 0.5291668 0.5291669 h -0.52917 -0.52917 v 0.5291669 0.5291669 h 0.52917 0.52917 v 0.5291669 0.5291668 h 0.52916 0.52917 v 0.5291669 0.5291669 h 0.52917 0.52916 v 0.5291669 0.5291668 h -1.5875 -1.5875 v -0.5291668 -0.5291669 h -0.52916 -0.52917 V -5.563343 -6.0925099 h -0.52917 -0.52916 v 1.0583338 1.0583337 h -1.05834 -1.05833 z"
+         style="font-family:'Press Start 2P';-inkscape-font-specification:'Press Start 2P'"
+         id="path2111" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="components"
+     style="display:none">
+    <circle
+       style="fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:0.600001;stroke-linecap:round"
+       id="path2168"
+       cx="7.6199999"
+       cy="18.530001"
+       r="5.0799999"
+       inkscape:label="clk" />
+  </g>
+</svg>

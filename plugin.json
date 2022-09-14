@@ -47,6 +47,14 @@
         "Polyphonic",
         "Utility"
       ]
+    },
+    {
+      "slug": "FastClock",
+      "name": "Fast Clock",
+      "description": "Outputs a clock signal that's as fast as possible. Its frequency is 1/2 of the current sample rate.",
+      "tags": [
+        "Clock generator"
+      ]
     }
   ]
 }

@@ -13,3 +13,4 @@ extern Model* modelQAEngineer;
 extern Model* modelEllie;
 extern Model* modelNoteClassifier;
 extern Model* modelPolyRepeater;
+extern Model* modelFastClock;

@@ -46,6 +46,14 @@
       "tags": [
         "Clock generator"
       ]
+    },
+    {
+      "slug": "LEDMatrix",
+      "name": "LED Matrix",
+      "description": "A matrix of LED's. X and Y inputs determine the selected pixel, and Brightness input controls the brightness of that pixel.",
+      "tags": [
+        "Visual"
+      ]
     }
   ]
 }

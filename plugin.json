@@ -14,15 +14,6 @@
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "QAEngineer",
-      "name": "QA Engineer",
-      "description": "Multiplies voltages beyond 10V. Also outputs infinity, negative infinity, and NaN, in case you feel like ordering a lizard.",
-      "tags": [
-        "Utility",
-        "Polyphonic"
-      ]
-    },
-    {
       "slug": "Ellie",
       "name": "Ellie",
       "description": "Ellie is hiding on your rack as a blank panel!",

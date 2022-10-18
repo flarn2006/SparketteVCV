@@ -9,11 +9,9 @@ void init(Plugin* p) {
 
 	// Add modules here
 	// p->addModel(modelMyModule);
-	p->addModel(modelQAEngineer);
 	p->addModel(modelEllie);
 	p->addModel(modelNoteClassifier);
 	p->addModel(modelPolyRepeater);
-	p->addModel(modelFastClock);
 	p->addModel(modelLEDMatrix);
 
 	// Any other plugin initialization may go here.

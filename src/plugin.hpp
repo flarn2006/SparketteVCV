@@ -12,5 +12,4 @@ extern Plugin* pluginInstance;
 extern Model* modelEllie;
 extern Model* modelNoteClassifier;
 extern Model* modelPolyRepeater;
-extern Model* modelFastClock;
 extern Model* modelLEDMatrix;

@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 
 struct NoteClassifier : Module {
 	enum ParamId {
@@ -84,7 +85,7 @@ struct NoteClassifier : Module {
 
 		for (int i=0; i<nchan; ++i) {
 			float fract = std::fmod(10.0f + voct[i], 1.0f);
-			int note = (int)(0.5f + fract * NOTE_COUNT);
+			int note = (int)(0.5f + fract * NOTE_COUNT) % 12;
 			if (ignoreGate || gate[i] >= 1.0f) {
 				note_states[note] = 3;
 				enable_light_brightness = 1.0f;

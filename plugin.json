@@ -40,14 +40,6 @@
       ]
     },
     {
-      "slug": "FastClock",
-      "name": "Fast Clock",
-      "description": "Outputs a clock signal that's as fast as possible. Its frequency is 1/2 of the current sample rate.",
-      "tags": [
-        "Clock generator"
-      ]
-    },
-    {
       "slug": "LEDMatrix",
       "name": "LED Matrix",
       "description": "A matrix of LED's. X and Y inputs determine the selected pixel, and Brightness input controls the brightness of that pixel.",

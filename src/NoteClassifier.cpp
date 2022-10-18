@@ -1,7 +1,6 @@
 #include "plugin.hpp"
 #include <cmath>
 #include <cstring>
-#include <cstdio>
 
 struct NoteClassifier : Module {
 	enum ParamId {

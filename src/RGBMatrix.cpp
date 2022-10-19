@@ -46,11 +46,11 @@ struct RGBMatrix : Module {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN + SUBPIXEL_COUNT);
 		configParam(XPOL_PARAM, 0.f, 1.f, 0.f, "X Polarity");
 		configParam(YPOL_PARAM, 0.f, 1.f, 0.f, "Y Polarity");
-		configParam(RSCL_PARAM, 0.f, 1.f, 1.f, "Red CV Scale");
+		configParam(RSCL_PARAM, -1.f, 1.f, 1.f, "Red CV Scale");
 		configParam(ROFF_PARAM, 0.f, 1.f, 0.f, "Red Offset");
-		configParam(GSCL_PARAM, 0.f, 1.f, 1.f, "Green CV Scale");
+		configParam(GSCL_PARAM, -1.f, 1.f, 1.f, "Green CV Scale");
 		configParam(GOFF_PARAM, 0.f, 1.f, 0.f, "Green Offset");
-		configParam(BSCL_PARAM, 0.f, 1.f, 1.f, "Blue CV Scale");
+		configParam(BSCL_PARAM, -1.f, 1.f, 1.f, "Blue CV Scale");
 		configParam(BOFF_PARAM, 0.f, 1.f, 0.f, "Blue Offset");
 		configParam(TRIGGER_PARAM, 0.f, 1.f, 0.f, "Frame Trigger");
 		configInput(R_INPUT, "Red CV");

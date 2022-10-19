@@ -115,6 +115,16 @@ struct RGBMatrix : Module {
 
 
 struct RGBMatrixWidget : ModuleWidget {
+	template <typename TBase = GrayModuleLightWidget>
+	struct TTrueRGBLight : TBase {
+		TTrueRGBLight() {
+			this->addBaseColor(color::RED);
+			this->addBaseColor(color::GREEN);
+			this->addBaseColor(color::BLUE);
+		}
+	};
+	using TrueRGBLight = TTrueRGBLight<>;
+
 	RGBMatrixWidget(RGBMatrix* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/RGBMatrix.svg")));
@@ -151,7 +161,7 @@ struct RGBMatrixWidget : ModuleWidget {
 
 		for (int y=0; y<RGBMatrix::MATRIX_HEIGHT; ++y) {
 			for (int x=0; x<RGBMatrix::MATRIX_WIDTH; ++x) {
-				addChild(createLightCentered<SmallLight<RedGreenBlueLight>>(matrix_top_left + mm2px(Vec(x_increment*x, y_increment*y)), module, RGBMatrix::LIGHTS_LEN + 3*(RGBMatrix::MATRIX_WIDTH * y + x)));
+				addChild(createLightCentered<SmallLight<TrueRGBLight>>(matrix_top_left + mm2px(Vec(x_increment*x, y_increment*y)), module, RGBMatrix::LIGHTS_LEN + 3*(RGBMatrix::MATRIX_WIDTH * y + x)));
 			}
 		}
 	}

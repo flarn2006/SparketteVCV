@@ -12,4 +12,4 @@ extern Plugin* pluginInstance;
 extern Model* modelEllie;
 extern Model* modelNoteClassifier;
 extern Model* modelPolyRepeater;
-extern Model* modelLEDMatrix;
+extern Model* modelRGBMatrix;

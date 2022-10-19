@@ -40,9 +40,9 @@
       ]
     },
     {
-      "slug": "LEDMatrix",
-      "name": "LED Matrix",
-      "description": "A matrix of LED's. X and Y inputs determine the selected pixel, and Brightness input controls the brightness of that pixel.",
+      "slug": "RGBMatrix",
+      "name": "RGB Matrix",
+      "description": "An array of RGB lights with built-in oscillators for generating and displaying patterns.",
       "tags": [
         "Visual"
       ]

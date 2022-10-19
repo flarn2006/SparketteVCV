@@ -5,7 +5,6 @@ struct RGBMatrix : Module {
 	enum ParamId {
 		XPOL_PARAM,
 		YPOL_PARAM,
-		AUTOTRIGGER_PARAM,
 		SAMPLECOUNT_PARAM,
 		RSCL_PARAM,
 		ROFF_PARAM,
@@ -32,8 +31,7 @@ struct RGBMatrix : Module {
 		OUTPUTS_LEN
 	};
 	enum LightId {
-		FRAME_LIGHT_G,
-		FRAME_LIGHT_R,
+		FRAME_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -53,7 +51,6 @@ struct RGBMatrix : Module {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN + SUBPIXEL_COUNT);
 		configParam(XPOL_PARAM, 0.f, 1.f, 0.f, "X Polarity");
 		configParam(YPOL_PARAM, 0.f, 1.f, 0.f, "Y Polarity");
-		configParam(AUTOTRIGGER_PARAM, 0.f, 1.f, 0.f, "Auto Trigger");
 		configParam(SAMPLECOUNT_PARAM, 1.f, 30.f, 1.f, "Samples Per Pixel");
 		paramQuantities[SAMPLECOUNT_PARAM]->snapEnabled = true;
 		configParam(RSCL_PARAM, -1.f, 1.f, 1.f, "Red CV Scale");
@@ -81,9 +78,8 @@ struct RGBMatrix : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
-		bool autotrigger = params[AUTOTRIGGER_PARAM].getValue() > 0.5f;
-		lights[FRAME_LIGHT_R].setBrightness(frame && !autotrigger ? 1.0f : 0.0f);
-		lights[FRAME_LIGHT_G].setBrightness(frame ? 1.0f : 0.0f);
+		bool autotrigger = !inputs[TRIG_INPUT].isConnected();
+		lights[FRAME_LIGHT].setBrightness(frame ? 0.5f : 0.0f);
 
 		outputs[EOF_OUTPUT].setVoltage(eof_pulse.process(args.sampleTime) ? 10.0f : 0.0f);
 
@@ -166,7 +162,6 @@ struct RGBMatrixWidget : ModuleWidget {
 
 		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 26.15)), module, RGBMatrix::XPOL_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 41.39)), module, RGBMatrix::YPOL_PARAM));
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<GreenRedLight>>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::AUTOTRIGGER_PARAM, RGBMatrix::FRAME_LIGHT_G));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(50.8, 41.39)), module, RGBMatrix::SAMPLECOUNT_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 57.053)), module, RGBMatrix::RSCL_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 57.053)), module, RGBMatrix::ROFF_PARAM));
@@ -186,6 +181,8 @@ struct RGBMatrixWidget : ModuleWidget {
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 41.39)), module, RGBMatrix::Y_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 41.39)), module, RGBMatrix::YPULSE_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.8, 26.15)), module, RGBMatrix::EOF_OUTPUT));
+
+		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::FRAME_LIGHT));
 
 		constexpr double x_increment = 116.84 / (RGBMatrix::MATRIX_WIDTH - 1);
 		constexpr double y_increment = 116.84 / (RGBMatrix::MATRIX_HEIGHT - 1);

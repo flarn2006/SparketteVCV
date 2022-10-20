@@ -52,6 +52,16 @@
       "tags": [
         "Visual"
       ]
+    },
+    {
+      "slug": "HSV2RGB",
+      "name": "Color Wheel",
+      "description": "Converts a color from HSV format to RGB values.",
+      "tags": [
+        "Utility",
+        "Visual",
+		"Polyphonic"
+      ]
     }
   ]
 }

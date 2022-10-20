@@ -108,9 +108,9 @@ struct RGBMatrix : Module {
 				if (++sample_counter >= sample_count) {
 					sample_counter = 0;
 					std::size_t base = 3 * (curY * MATRIX_WIDTH + curX);
-					framebuf[base+0] = applyScaleOffset(inputs[R_INPUT], params[RSCL_PARAM], params[ROFF_PARAM]);
-					framebuf[base+1] = applyScaleOffset(inputs[G_INPUT], params[GSCL_PARAM], params[GOFF_PARAM]);
-					framebuf[base+2] = applyScaleOffset(inputs[B_INPUT], params[BSCL_PARAM], params[BOFF_PARAM]);
+					framebuf[base+0] = applyScaleOffset(inputs[R_INPUT].getVoltage(), params[RSCL_PARAM], params[ROFF_PARAM]);
+					framebuf[base+1] = applyScaleOffset(inputs[G_INPUT].getVoltage(), params[GSCL_PARAM], params[GOFF_PARAM]);
+					framebuf[base+2] = applyScaleOffset(inputs[B_INPUT].getVoltage(), params[BSCL_PARAM], params[BOFF_PARAM]);
 				} else {
 					return;
 				}
@@ -118,6 +118,7 @@ struct RGBMatrix : Module {
 
 			int channels = polyphonic ? PORT_MAX_CHANNELS : 1;
 			curX += (curX >= 0) ? channels : 1;
+			float channelbuf[PORT_MAX_CHANNELS];
 			if (curX >= MATRIX_WIDTH) {
 				curX = 0;
 				if (++curY >= MATRIX_HEIGHT) {

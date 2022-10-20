@@ -3,6 +3,6 @@
 
 namespace sparkette {
 
-	float applyScaleOffset(rack::engine::Input& input, rack::engine::Param& scale, rack::engine::Param& offset);
+	float applyScaleOffset(float voltage, rack::engine::Param& scale, rack::engine::Param& offset);
 
 }

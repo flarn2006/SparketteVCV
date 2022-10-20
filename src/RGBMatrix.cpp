@@ -1,5 +1,7 @@
 #include "plugin.hpp"
-#include <cstdio>
+#include "Lights.hpp"
+
+using namespace sparkette;
 
 struct RGBMatrix : Module {
 	enum ParamId {
@@ -139,18 +141,7 @@ struct RGBMatrix : Module {
 	}
 };
 
-
 struct RGBMatrixWidget : ModuleWidget {
-	template <typename TBase = GrayModuleLightWidget>
-	struct TTrueRGBLight : TBase {
-		TTrueRGBLight() {
-			this->addBaseColor(color::RED);
-			this->addBaseColor(color::GREEN);
-			this->addBaseColor(color::BLUE);
-		}
-	};
-	using TrueRGBLight = TTrueRGBLight<>;
-
 	RGBMatrixWidget(RGBMatrix* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/RGBMatrix.svg")));
@@ -184,15 +175,7 @@ struct RGBMatrixWidget : ModuleWidget {
 
 		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::FRAME_LIGHT));
 
-		constexpr double x_increment = 116.84 / (RGBMatrix::MATRIX_WIDTH - 1);
-		constexpr double y_increment = 116.84 / (RGBMatrix::MATRIX_HEIGHT - 1);
-		auto matrix_top_left = mm2px(Vec(60.96, 5.83));
-
-		for (int y=0; y<RGBMatrix::MATRIX_HEIGHT; ++y) {
-			for (int x=0; x<RGBMatrix::MATRIX_WIDTH; ++x) {
-				addChild(createLightCentered<SmallLight<TrueRGBLight>>(matrix_top_left + mm2px(Vec(x_increment*x, y_increment*y)), module, RGBMatrix::LIGHTS_LEN + 3*(RGBMatrix::MATRIX_WIDTH * y + x)));
-			}
-		}
+		addChild(addLightMatrix<>(mm2px(Vec(60.96, 5.83)), mm2px(Vec(116.84, 116.84)), module, RGBMatrix::LIGHTS_LEN, RGBMatrix::MATRIX_WIDTH, RGBMatrix::MATRIX_HEIGHT));
 	}
 };
 

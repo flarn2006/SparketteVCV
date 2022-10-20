@@ -33,7 +33,9 @@ struct RGBMatrix : Module {
 		OUTPUTS_LEN
 	};
 	enum LightId {
-		FRAME_LIGHT,
+		FRAME_LIGHT_R,
+		FRAME_LIGHT_G,
+		FRAME_LIGHT_B,
 		LIGHTS_LEN
 	};
 
@@ -41,7 +43,9 @@ struct RGBMatrix : Module {
 	static constexpr int MATRIX_HEIGHT = 32;
 	static constexpr int PIXEL_COUNT = MATRIX_WIDTH * MATRIX_HEIGHT;
 	static constexpr int SUBPIXEL_COUNT = 3 * PIXEL_COUNT;
+	static_assert(PORT_MAX_CHANNELS == MATRIX_WIDTH / 2);
 	
+	bool polyphonic = false;
 	bool frame = false;
 	bool trigger_last = false;
 	int curX, curY;
@@ -80,10 +84,12 @@ struct RGBMatrix : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
+		bool eof = eof_pulse.process(args.sampleTime);
 		bool autotrigger = !inputs[TRIG_INPUT].isConnected();
-		lights[FRAME_LIGHT].setBrightness(frame ? 0.5f : 0.0f);
-
-		outputs[EOF_OUTPUT].setVoltage(eof_pulse.process(args.sampleTime) ? 10.0f : 0.0f);
+		lights[FRAME_LIGHT_R].setBrightness(!frame ? 0.5f : 0.0f);
+		lights[FRAME_LIGHT_G].setBrightness(eof ? 0.5f : 0.0f);
+		lights[FRAME_LIGHT_B].setBrightness(polyphonic ? 0.5f : 0.0f);
+		outputs[EOF_OUTPUT].setVoltage(eof ? 10.0f : 0.0f);
 
 		int sample_count = (int)params[SAMPLECOUNT_PARAM].getValue();
 
@@ -116,7 +122,9 @@ struct RGBMatrix : Module {
 				}
 			}
 
-			if (++curX >= MATRIX_WIDTH) {
+			int channels = polyphonic ? PORT_MAX_CHANNELS : 1;
+			curX += (curX >= 0) ? channels : 1;
+			if (curX >= MATRIX_WIDTH) {
 				curX = 0;
 				if (++curY >= MATRIX_HEIGHT) {
 					for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
@@ -138,6 +146,18 @@ struct RGBMatrix : Module {
 			off = params[YPOL_PARAM].getValue() > 0.5f ? -5.0f : 0.0f;
 			outputs[Y_OUTPUT].setVoltage(off + 10.0f * t);
 		}
+	}
+
+	json_t* dataToJson() override {
+		json_t* root = json_object();
+		json_object_set_new(root, "polyphonic", json_boolean(polyphonic));
+		return root;
+	}
+
+	void dataFromJson(json_t* root) override {
+		json_t* item = json_object_get(root, "polyphonic");
+		if (item)
+			polyphonic = json_boolean_value(item);
 	}
 };
 
@@ -173,9 +193,19 @@ struct RGBMatrixWidget : ModuleWidget {
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 41.39)), module, RGBMatrix::YPULSE_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.8, 26.15)), module, RGBMatrix::EOF_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::FRAME_LIGHT));
+		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::FRAME_LIGHT_R));
 
 		addChild(addLightMatrix<>(mm2px(Vec(60.96, 5.83)), mm2px(Vec(116.84, 116.84)), module, RGBMatrix::LIGHTS_LEN, RGBMatrix::MATRIX_WIDTH, RGBMatrix::MATRIX_HEIGHT));
+	}
+
+	void appendContextMenu(Menu* menu) override {
+		RGBMatrix* module = dynamic_cast<RGBMatrix*>(this->module);
+		auto item = createCheckMenuItem("Polyphonic Mode", "",
+			[module](){ return module->polyphonic; },
+			[module](){ module->polyphonic = !module->polyphonic; }
+		);
+		menu->addChild(new MenuEntry);
+		menu->addChild(item);
 	}
 };
 

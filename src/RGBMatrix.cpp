@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include "Utility.hpp"
 #include "Lights.hpp"
 
 using namespace sparkette;
@@ -76,13 +77,6 @@ struct RGBMatrix : Module {
 		configOutput(YPULSE_OUTPUT, "Y Pulse");
 	}
 
-	float calcChannel(InputId input, ParamId scale, ParamId offset) {
-		float cv = inputs[input].getVoltage() / 10;
-		float sc = params[scale].getValue();
-		float of = params[offset].getValue();
-		return of + sc * cv;
-	}
-
 	void process(const ProcessArgs& args) override {
 		bool eof = eof_pulse.process(args.sampleTime);
 		bool autotrigger = !inputs[TRIG_INPUT].isConnected();
@@ -114,9 +108,9 @@ struct RGBMatrix : Module {
 				if (++sample_counter >= sample_count) {
 					sample_counter = 0;
 					std::size_t base = 3 * (curY * MATRIX_WIDTH + curX);
-					framebuf[base+0] = calcChannel(R_INPUT, RSCL_PARAM, ROFF_PARAM);
-					framebuf[base+1] = calcChannel(G_INPUT, GSCL_PARAM, GOFF_PARAM);
-					framebuf[base+2] = calcChannel(B_INPUT, BSCL_PARAM, BOFF_PARAM);
+					framebuf[base+0] = applyScaleOffset(inputs[R_INPUT], params[RSCL_PARAM], params[ROFF_PARAM]);
+					framebuf[base+1] = applyScaleOffset(inputs[G_INPUT], params[GSCL_PARAM], params[GOFF_PARAM]);
+					framebuf[base+2] = applyScaleOffset(inputs[B_INPUT], params[BSCL_PARAM], params[BOFF_PARAM]);
 				} else {
 					return;
 				}

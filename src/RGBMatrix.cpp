@@ -1,5 +1,7 @@
 #include "plugin.hpp"
-#include <cstdio>
+#include "RGBMatrix.hpp"
+
+using namespace sparkette;
 
 struct RGBMatrix : Module {
 	enum ParamId {
@@ -145,16 +147,6 @@ struct RGBMatrix : Module {
 
 
 struct RGBMatrixWidget : ModuleWidget {
-	template <typename TBase = GrayModuleLightWidget>
-	struct TTrueRGBLight : TBase {
-		TTrueRGBLight() {
-			this->addBaseColor(color::RED);
-			this->addBaseColor(color::GREEN);
-			this->addBaseColor(color::BLUE);
-		}
-	};
-	using TrueRGBLight = TTrueRGBLight<>;
-
 	RGBMatrixWidget(RGBMatrix* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/RGBMatrix.svg")));

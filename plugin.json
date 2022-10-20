@@ -46,6 +46,15 @@
       "tags": [
         "Visual"
       ]
+    },
+    {
+      "slug": "RGBMatrixRandomAccess",
+      "name": "RGB Matrix Random Access Expander",
+      "description": "Adds a set of X/Y/R/G/B inputs to the RGB Matrix module, which can be used to directly write to specific LED's.",
+      "tags": [
+        "Visual",
+        "Expander"
+      ]
     }
   ]
 }

@@ -58,7 +58,7 @@ struct RGBMatrix : Module {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN + SUBPIXEL_COUNT);
 		configParam(XPOL_PARAM, 0.f, 1.f, 0.f, "X Polarity");
 		configParam(YPOL_PARAM, 0.f, 1.f, 0.f, "Y Polarity");
-		configParam(SAMPLECOUNT_PARAM, 1.f, 30.f, 1.f, "Samples Per Pixel");
+		configParam(SAMPLECOUNT_PARAM, 1.f, 30.f, 2.f, "Samples Per Pixel");
 		paramQuantities[SAMPLECOUNT_PARAM]->snapEnabled = true;
 		configParam(RSCL_PARAM, -1.f, 1.f, 1.f, "Red CV Scale");
 		configParam(ROFF_PARAM, 0.f, 1.f, 0.f, "Red Offset");

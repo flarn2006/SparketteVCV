@@ -52,7 +52,7 @@ struct RGBMatrix : Module {
 	int curX, curY;
 	int sample_counter;
 	float framebuf[SUBPIXEL_COUNT];
-	dsp::PulseGenerator eof_pulse;
+	dsp::PulseGenerator frame_light_pulse;
 
 	RGBMatrix() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN + SUBPIXEL_COUNT);
@@ -78,12 +78,11 @@ struct RGBMatrix : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
-		bool eof = eof_pulse.process(args.sampleTime);
 		bool autotrigger = !inputs[TRIG_INPUT].isConnected();
 		lights[FRAME_LIGHT_R].setBrightness(!frame ? 0.5f : 0.0f);
-		lights[FRAME_LIGHT_G].setBrightness(eof ? 0.5f : 0.0f);
+		lights[FRAME_LIGHT_G].setBrightness(frame_light_pulse.process(args.sampleTime) ? 0.5f : 0.0f);
 		lights[FRAME_LIGHT_B].setBrightness(polyphonic ? 0.5f : 0.0f);
-		outputs[EOF_OUTPUT].setVoltage(eof ? 10.0f : 0.0f);
+		outputs[EOF_OUTPUT].setVoltage(curX >= MATRIX_WIDTH-1 && curY == MATRIX_HEIGHT-1 ? 10.0f : 0.0f);
 
 		int sample_count = (int)params[SAMPLECOUNT_PARAM].getValue();
 
@@ -94,6 +93,7 @@ struct RGBMatrix : Module {
 				curX = MATRIX_WIDTH;
 				curY = -1;
 				sample_counter = 0;
+				frame_light_pulse.trigger(0.1f);
 			}
 			trigger_last = trigger;
 		}
@@ -133,8 +133,6 @@ struct RGBMatrix : Module {
 					outputs[Y_OUTPUT].setVoltage(0.0f);
 					return;
 				}
-				if (curY == MATRIX_HEIGHT - 1)
-					eof_pulse.trigger(1e-3f);
 			}
 
 			for (int i=0; i<channels; ++i) {

@@ -50,7 +50,8 @@
       "name": "RGB Matrix",
       "description": "An array of RGB lights with built-in oscillators for generating and displaying patterns.",
       "tags": [
-        "Visual"
+        "Visual",
+		"Polyphonic"
       ]
     },
     {

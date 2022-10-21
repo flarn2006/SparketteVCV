@@ -45,7 +45,7 @@ struct RGBMatrix : Module {
 	static constexpr int PIXEL_COUNT = MATRIX_WIDTH * MATRIX_HEIGHT;
 	static constexpr int SUBPIXEL_COUNT = 3 * PIXEL_COUNT;
 	static_assert(PORT_MAX_CHANNELS == MATRIX_WIDTH / 2);
-	
+
 	bool polyphonic = false;
 	bool frame = false;
 	bool trigger_last = false;
@@ -104,21 +104,25 @@ struct RGBMatrix : Module {
 				outputs[XPULSE_OUTPUT].setVoltage(2*sample_counter / sample_count ? 0.0f : 10.0f);
 			outputs[YPULSE_OUTPUT].setVoltage(2*curX / MATRIX_WIDTH ? 0.0f : 10.0f);
 
+			int channels = polyphonic ? PORT_MAX_CHANNELS : 1;
+			
 			if (curX >= 0 && sample_counter < sample_count) {
 				if (++sample_counter >= sample_count) {
 					sample_counter = 0;
-					std::size_t base = 3 * (curY * MATRIX_WIDTH + curX);
-					framebuf[base+0] = applyScaleOffset(inputs[R_INPUT].getVoltage(), params[RSCL_PARAM], params[ROFF_PARAM]);
-					framebuf[base+1] = applyScaleOffset(inputs[G_INPUT].getVoltage(), params[GSCL_PARAM], params[GOFF_PARAM]);
-					framebuf[base+2] = applyScaleOffset(inputs[B_INPUT].getVoltage(), params[BSCL_PARAM], params[BOFF_PARAM]);
+					for (int i=0; i<channels; ++i) {
+						std::size_t base = 3 * (curY * MATRIX_WIDTH + curX + i);
+						framebuf[base+0] = applyScaleOffset(inputs[R_INPUT].getVoltage(i), params[RSCL_PARAM], params[ROFF_PARAM]);
+						framebuf[base+1] = applyScaleOffset(inputs[G_INPUT].getVoltage(i), params[GSCL_PARAM], params[GOFF_PARAM]);
+						framebuf[base+2] = applyScaleOffset(inputs[B_INPUT].getVoltage(i), params[BSCL_PARAM], params[BOFF_PARAM]);
+					}
 				} else {
 					return;
 				}
 			}
 
-			int channels = polyphonic ? PORT_MAX_CHANNELS : 1;
 			curX += (curX >= 0) ? channels : 1;
-			float channelbuf[PORT_MAX_CHANNELS];
+			outputs[X_OUTPUT].setChannels(channels);
+			outputs[Y_OUTPUT].setChannels(channels);
 			if (curX >= MATRIX_WIDTH) {
 				curX = 0;
 				if (++curY >= MATRIX_HEIGHT) {
@@ -133,13 +137,16 @@ struct RGBMatrix : Module {
 					eof_pulse.trigger(1e-3f);
 			}
 
-			float t = (float)curX / MATRIX_WIDTH;
-			float off = params[XPOL_PARAM].getValue() > 0.5f ? -5.0f : 0.0f;
-			outputs[X_OUTPUT].setVoltage(off + 10.0f * t);
+			for (int i=0; i<channels; ++i) {
+				float t = (float)(curX + i) / MATRIX_WIDTH;
+				float off = params[XPOL_PARAM].getValue() > 0.5f ? -5.0f : 0.0f;
+				outputs[X_OUTPUT].setVoltage(off + 10.0f * t, i);
+			}
 
-			t = (float)curY / MATRIX_HEIGHT;
-			off = params[YPOL_PARAM].getValue() > 0.5f ? -5.0f : 0.0f;
-			outputs[Y_OUTPUT].setVoltage(off + 10.0f * t);
+			float t = (float)curY / MATRIX_HEIGHT;
+			float off = params[YPOL_PARAM].getValue() > 0.5f ? -5.0f : 0.0f;
+			for (int i=0; i<channels; ++i)
+				outputs[Y_OUTPUT].setVoltage(off + 10.0f * t, i);
 		}
 	}
 

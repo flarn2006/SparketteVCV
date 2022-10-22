@@ -47,6 +47,7 @@ struct RGBMatrix : Module {
 	static_assert(PORT_MAX_CHANNELS == MATRIX_WIDTH / 2);
 
 	bool polyphonic = false;
+	bool double_buffered = true;
 	bool frame = false;
 	bool trigger_last = false;
 	int curX, curY;
@@ -112,9 +113,18 @@ struct RGBMatrix : Module {
 					sample_counter = 0;
 					for (int i=0; i<channels; ++i) {
 						std::size_t base = 3 * (curY * MATRIX_WIDTH + curX + i);
-						framebuf[base+0] = applyScaleOffset(inputs[R_INPUT].getVoltage(i), params[RSCL_PARAM], params[ROFF_PARAM]);
-						framebuf[base+1] = applyScaleOffset(inputs[G_INPUT].getVoltage(i), params[GSCL_PARAM], params[GOFF_PARAM]);
-						framebuf[base+2] = applyScaleOffset(inputs[B_INPUT].getVoltage(i), params[BSCL_PARAM], params[BOFF_PARAM]);
+						float r = applyScaleOffset(inputs[R_INPUT].getVoltage(i), params[RSCL_PARAM], params[ROFF_PARAM]);
+						float g = applyScaleOffset(inputs[G_INPUT].getVoltage(i), params[GSCL_PARAM], params[GOFF_PARAM]);
+						float b = applyScaleOffset(inputs[B_INPUT].getVoltage(i), params[BSCL_PARAM], params[BOFF_PARAM]);
+						if (double_buffered) {
+							framebuf[base+0] = r;
+							framebuf[base+1] = g;
+							framebuf[base+2] = b;
+						} else {
+							lights[LIGHTS_LEN+base+0].setBrightness(r);
+							lights[LIGHTS_LEN+base+1].setBrightness(g);
+							lights[LIGHTS_LEN+base+2].setBrightness(b);
+						}
 					}
 				} else {
 					return;
@@ -127,8 +137,10 @@ struct RGBMatrix : Module {
 			if (curX >= MATRIX_WIDTH) {
 				curX = 0;
 				if (++curY >= MATRIX_HEIGHT) {
-					for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
-						lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
+					if (double_buffered) {
+						for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
+							lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
+					}
 					frame = false;
 					outputs[X_OUTPUT].setVoltage(0.0f);
 					outputs[Y_OUTPUT].setVoltage(0.0f);
@@ -152,6 +164,7 @@ struct RGBMatrix : Module {
 	json_t* dataToJson() override {
 		json_t* root = json_object();
 		json_object_set_new(root, "polyphonic", json_boolean(polyphonic));
+		json_object_set_new(root, "double_buffered", json_boolean(double_buffered));
 		return root;
 	}
 
@@ -159,6 +172,10 @@ struct RGBMatrix : Module {
 		json_t* item = json_object_get(root, "polyphonic");
 		if (item)
 			polyphonic = json_boolean_value(item);
+
+		item = json_object_get(root, "double_buffered");
+		if (item)
+			double_buffered = json_boolean_value(item);
 	}
 };
 
@@ -201,11 +218,18 @@ struct RGBMatrixWidget : ModuleWidget {
 
 	void appendContextMenu(Menu* menu) override {
 		RGBMatrix* module = dynamic_cast<RGBMatrix*>(this->module);
-		auto item = createCheckMenuItem("Polyphonic Mode", "",
+		menu->addChild(new MenuEntry);
+
+		auto item = createCheckMenuItem("Polyphonic mode", "",
 			[module](){ return module->polyphonic; },
 			[module](){ module->polyphonic = !module->polyphonic; }
 		);
-		menu->addChild(new MenuEntry);
+		menu->addChild(item);
+
+		item = createCheckMenuItem("Double-buffered", "",
+			[module](){ return module->double_buffered; },
+			[module](){ module->double_buffered = !module->double_buffered; }
+		);
 		menu->addChild(item);
 	}
 };

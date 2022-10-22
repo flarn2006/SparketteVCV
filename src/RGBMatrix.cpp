@@ -75,6 +75,7 @@ struct RGBMatrix : Module {
 		configOutput(XPULSE_OUTPUT, "X Pulse");
 		configOutput(Y_OUTPUT, "Y Signal");
 		configOutput(YPULSE_OUTPUT, "Y Pulse");
+		configOutput(EOF_OUTPUT, "End of Frame");
 	}
 
 	void process(const ProcessArgs& args) override {

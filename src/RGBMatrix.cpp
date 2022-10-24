@@ -181,7 +181,16 @@ struct RGBMatrix : Module {
 	}
 };
 
-template <int Width, int Height, int PolyChannels = PORT_MAX_CHANNELS, template <typename T> typename TLight = SmallLight>
+template <template <typename T> typename TLight>
+struct LightSizingInfo {
+	static constexpr double offset = 0.0;
+};
+template <>
+struct LightSizingInfo<LargeLight> {
+	static constexpr double offset = 2.0;
+};
+
+template <int Width, int Height, template <typename T> typename TLight = SmallLight, int PolyChannels = PORT_MAX_CHANNELS>
 struct RGBMatrixWidget : ModuleWidget {
 	using ModuleType = RGBMatrix<Width, Height, PolyChannels>;
 	RGBMatrixWidget(ModuleType* module) {
@@ -217,7 +226,8 @@ struct RGBMatrixWidget : ModuleWidget {
 
 		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, ModuleType::FRAME_LIGHT_R));
 
-		addChild(addLightMatrix<TLight<TrueRGBLight>>(mm2px(Vec(60.96, 5.83)), mm2px(Vec(116.84, 116.84)), module, ModuleType::LIGHTS_LEN, ModuleType::MATRIX_WIDTH, ModuleType::MATRIX_HEIGHT));
+		const Vec offset = mm2px(Vec(LightSizingInfo<TLight>::offset, LightSizingInfo<TLight>::offset));
+		addChild(addLightMatrix<TLight<TrueRGBLight>>(mm2px(Vec(60.96, 5.83))+offset, mm2px(Vec(116.84, 116.84))-2*offset, module, ModuleType::LIGHTS_LEN, ModuleType::MATRIX_WIDTH, ModuleType::MATRIX_HEIGHT));
 	}
 
 	void appendContextMenu(Menu* menu) override {
@@ -239,6 +249,6 @@ struct RGBMatrixWidget : ModuleWidget {
 };
 
 
-Model* modelRGBMatrix16 = createModel<RGBMatrix<16, 16>, RGBMatrixWidget<16, 16, PORT_MAX_CHANNELS, LargeLight>>("RGBMatrix16");
+Model* modelRGBMatrix16 = createModel<RGBMatrix<16, 16>, RGBMatrixWidget<16, 16, LargeLight>>("RGBMatrix16");
 Model* modelRGBMatrix = createModel<RGBMatrix<32, 32>, RGBMatrixWidget<32, 32>>("RGBMatrix");
-Model* modelRGBMatrix64 = createModel<RGBMatrix<64, 64>, RGBMatrixWidget<64, 64>>("RGBMatrix64");
+Model* modelRGBMatrix64 = createModel<RGBMatrix<64, 64>, RGBMatrixWidget<64, 64, SmallSimpleLight>>("RGBMatrix64");

@@ -4,6 +4,7 @@
 
 using namespace sparkette;
 
+template <int Width, int Height, int PolyChannels = PORT_MAX_CHANNELS>
 struct RGBMatrix : Module {
 	enum ParamId {
 		XPOL_PARAM,
@@ -40,11 +41,11 @@ struct RGBMatrix : Module {
 		LIGHTS_LEN
 	};
 
-	static constexpr int MATRIX_WIDTH = 32;
-	static constexpr int MATRIX_HEIGHT = 32;
+	static constexpr int MATRIX_WIDTH = Width;
+	static constexpr int MATRIX_HEIGHT = Height;
+	static constexpr int POLY_CHANNELS = PolyChannels;
 	static constexpr int PIXEL_COUNT = MATRIX_WIDTH * MATRIX_HEIGHT;
 	static constexpr int SUBPIXEL_COUNT = 3 * PIXEL_COUNT;
-	static constexpr int POLY_CHANNELS = PORT_MAX_CHANNELS;
 	static_assert(MATRIX_WIDTH % POLY_CHANNELS == 0, "MATRIX_WIDTH must be a multiple of POLY_CHANNELS.");
 
 	bool polyphonic = false;
@@ -180,8 +181,10 @@ struct RGBMatrix : Module {
 	}
 };
 
+template <int Width, int Height, int PolyChannels = PORT_MAX_CHANNELS, template <typename T> typename TLight = MediumLight>
 struct RGBMatrixWidget : ModuleWidget {
-	RGBMatrixWidget(RGBMatrix* module) {
+	using ModuleType = RGBMatrix<Width, Height, PolyChannels>;
+	RGBMatrixWidget(ModuleType* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/RGBMatrix.svg")));
 
@@ -190,35 +193,35 @@ struct RGBMatrixWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(10 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 26.15)), module, RGBMatrix::XPOL_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 41.39)), module, RGBMatrix::YPOL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(50.8, 41.39)), module, RGBMatrix::SAMPLECOUNT_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 57.053)), module, RGBMatrix::RSCL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 57.053)), module, RGBMatrix::ROFF_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 72.399)), module, RGBMatrix::GSCL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 72.399)), module, RGBMatrix::GOFF_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 87.427)), module, RGBMatrix::BSCL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 87.427)), module, RGBMatrix::BOFF_PARAM));
-		addParam(createParamCentered<CKD6>(mm2px(Vec(18.733, 104.89)), module, RGBMatrix::TRIGGER_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 26.15)), module, ModuleType::XPOL_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 41.39)), module, ModuleType::YPOL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(50.8, 41.39)), module, ModuleType::SAMPLECOUNT_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 57.053)), module, ModuleType::RSCL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 57.053)), module, ModuleType::ROFF_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 72.399)), module, ModuleType::GSCL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 72.399)), module, ModuleType::GOFF_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 87.427)), module, ModuleType::BSCL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 87.427)), module, ModuleType::BOFF_PARAM));
+		addParam(createParamCentered<CKD6>(mm2px(Vec(18.733, 104.89)), module, ModuleType::TRIGGER_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 56.63)), module, RGBMatrix::R_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 72.399)), module, RGBMatrix::G_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 88.063)), module, RGBMatrix::B_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 104.89)), module, RGBMatrix::TRIG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 56.63)), module, ModuleType::R_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 72.399)), module, ModuleType::G_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 88.063)), module, ModuleType::B_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 104.89)), module, ModuleType::TRIG_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 26.15)), module, RGBMatrix::X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 26.15)), module, RGBMatrix::XPULSE_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 41.39)), module, RGBMatrix::Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 41.39)), module, RGBMatrix::YPULSE_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.8, 26.15)), module, RGBMatrix::EOF_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 26.15)), module, ModuleType::X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 26.15)), module, ModuleType::XPULSE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 41.39)), module, ModuleType::Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 41.39)), module, ModuleType::YPULSE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.8, 26.15)), module, ModuleType::EOF_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::FRAME_LIGHT_R));
+		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, ModuleType::FRAME_LIGHT_R));
 
-		addChild(addLightMatrix<>(mm2px(Vec(60.96, 5.83)), mm2px(Vec(116.84, 116.84)), module, RGBMatrix::LIGHTS_LEN, RGBMatrix::MATRIX_WIDTH, RGBMatrix::MATRIX_HEIGHT));
+		addChild(addLightMatrix<>(mm2px(Vec(60.96, 5.83)), mm2px(Vec(116.84, 116.84)), module, ModuleType::LIGHTS_LEN, ModuleType::MATRIX_WIDTH, ModuleType::MATRIX_HEIGHT));
 	}
 
 	void appendContextMenu(Menu* menu) override {
-		RGBMatrix* module = dynamic_cast<RGBMatrix*>(this->module);
+		ModuleType* module = dynamic_cast<ModuleType*>(this->module);
 		menu->addChild(new MenuEntry);
 
 		auto item = createCheckMenuItem("Polyphonic mode", "",
@@ -236,4 +239,4 @@ struct RGBMatrixWidget : ModuleWidget {
 };
 
 
-Model* modelRGBMatrix = createModel<RGBMatrix, RGBMatrixWidget>("RGBMatrix");
+Model* modelRGBMatrix = createModel<RGBMatrix<32, 32>, RGBMatrixWidget<32, 32>>("RGBMatrix");

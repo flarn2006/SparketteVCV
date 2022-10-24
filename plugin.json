@@ -1,13 +1,7 @@
 {
   "slug": "Sparkette",
   "name": "Sparkette's Stuff",
-<<<<<<< HEAD
-  "version": "2.1.2",
-||||||| parent of ad6aab2 (Increase version to 2.2.0)
-  "version": "2.1.0",
-=======
   "version": "2.2.0",
->>>>>>> ad6aab2 (Increase version to 2.2.0)
   "license": "GPL-3.0-or-later",
   "brand": "Sparkette's Stuff",
   "author": "Sara Sparks",

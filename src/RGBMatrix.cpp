@@ -44,7 +44,8 @@ struct RGBMatrix : Module {
 	static constexpr int MATRIX_HEIGHT = 32;
 	static constexpr int PIXEL_COUNT = MATRIX_WIDTH * MATRIX_HEIGHT;
 	static constexpr int SUBPIXEL_COUNT = 3 * PIXEL_COUNT;
-	static_assert(PORT_MAX_CHANNELS == MATRIX_WIDTH / 2);
+	static constexpr int POLY_CHANNELS = PORT_MAX_CHANNELS;
+	static_assert(MATRIX_WIDTH % POLY_CHANNELS == 0, "MATRIX_WIDTH must be a multiple of POLY_CHANNELS.");
 
 	bool polyphonic = false;
 	bool double_buffered = true;
@@ -106,7 +107,7 @@ struct RGBMatrix : Module {
 				outputs[XPULSE_OUTPUT].setVoltage(2*sample_counter / sample_count ? 0.0f : 10.0f);
 			outputs[YPULSE_OUTPUT].setVoltage(2*curX / MATRIX_WIDTH ? 0.0f : 10.0f);
 
-			int channels = polyphonic ? PORT_MAX_CHANNELS : 1;
+			int channels = polyphonic ? POLY_CHANNELS : 1;
 			
 			if (curX >= 0 && sample_counter < sample_count) {
 				if (++sample_counter >= sample_count) {

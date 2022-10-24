@@ -39,15 +39,33 @@
         "Utility"
       ]
     },
+	{
+	  "slug": "RGBMatrix16",
+	  "name": "RGB Matrix (16x16)",
+	  "description" :"An array of RGB lights with built-in oscillators for generating and displaying patterns.",
+	  "tags": [
+	  	"Visual",
+		"Polyphonic"
+	  ]
+	},
     {
       "slug": "RGBMatrix",
-      "name": "RGB Matrix",
+      "name": "RGB Matrix (32x32)",
       "description": "An array of RGB lights with built-in oscillators for generating and displaying patterns.",
       "tags": [
         "Visual",
 		"Polyphonic"
       ]
     },
+	{
+	  "slug": "RGBMatrix64",
+	  "name": "RGB Matrix (64x64)",
+	  "description" :"An array of RGB lights with built-in oscillators for generating and displaying patterns.",
+	  "tags": [
+	  	"Visual",
+		"Polyphonic"
+	  ]
+	},
     {
       "slug": "HSV2RGB",
       "name": "Color Wheel",

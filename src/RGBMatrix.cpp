@@ -239,4 +239,6 @@ struct RGBMatrixWidget : ModuleWidget {
 };
 
 
+Model* modelRGBMatrix16 = createModel<RGBMatrix<16, 16>, RGBMatrixWidget<16, 16, PORT_MAX_CHANNELS, LargeLight>>("RGBMatrix16");
 Model* modelRGBMatrix = createModel<RGBMatrix<32, 32>, RGBMatrixWidget<32, 32>>("RGBMatrix");
+Model* modelRGBMatrix64 = createModel<RGBMatrix<64, 64>, RGBMatrixWidget<64, 64>>("RGBMatrix64");

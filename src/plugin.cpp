@@ -13,7 +13,9 @@ void init(Plugin* p) {
 	p->addModel(modelNoteClassifier);
 	p->addModel(modelPolyRepeater);
 	p->addModel(modelPolySelector);
+	p->addModel(modelRGBMatrix16);
 	p->addModel(modelRGBMatrix);
+	p->addModel(modelRGBMatrix64);
 	p->addModel(modelHSV2RGB);
 
 	// Any other plugin initialization may go here.

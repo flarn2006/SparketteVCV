@@ -45,7 +45,7 @@
       "description": "An array of RGB lights with built-in oscillators for generating and displaying patterns.",
       "tags": [
         "Visual",
-		"Polyphonic"
+        "Polyphonic"
       ]
     },
     {
@@ -55,7 +55,17 @@
       "tags": [
         "Utility",
         "Visual",
-		"Polyphonic"
+        "Polyphonic"
+      ]
+    },
+    {
+      "slug": "PolySelector",
+      "name": "Polyphonic Selector",
+      "description": "Selects one output (or more) from a polyphonic input based on the voltage from another input.",
+      "tags": [
+        "Polyphonic",
+        "Utility",
+        "Sequencer"
       ]
     }
   ]

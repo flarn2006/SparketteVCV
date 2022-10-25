@@ -12,6 +12,7 @@ void init(Plugin* p) {
 	p->addModel(modelEllie);
 	p->addModel(modelNoteClassifier);
 	p->addModel(modelPolyRepeater);
+	p->addModel(modelPolySelector);
 	p->addModel(modelRGBMatrix);
 	p->addModel(modelHSV2RGB);
 

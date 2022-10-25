@@ -12,5 +12,6 @@ extern Plugin* pluginInstance;
 extern Model* modelEllie;
 extern Model* modelNoteClassifier;
 extern Model* modelPolyRepeater;
+extern Model* modelPolySelector;
 extern Model* modelRGBMatrix;
 extern Model* modelHSV2RGB;

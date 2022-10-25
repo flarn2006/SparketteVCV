@@ -74,7 +74,9 @@ struct PolySelector : Module {
 			counts_per_channel[i] = 0;
 
 		for (int i=0; i<select_channels; ++i) {
-			int j = (int)(select[i] / 10.0f * poly_channels);
+			float s = select[i];
+			if (s < 0) s += 10.0f;
+			int j = (int)(s / 10.0f * poly_channels);
 			if (j < 0)
 				j = 0;
 			else if (j >= poly_channels)

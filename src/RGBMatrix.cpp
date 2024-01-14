@@ -4,6 +4,7 @@
 
 using namespace sparkette;
 
+template <int Width, int Height, int PolyChannels = PORT_MAX_CHANNELS>
 struct RGBMatrix : Module {
 	enum ParamId {
 		XPOL_PARAM,
@@ -40,13 +41,15 @@ struct RGBMatrix : Module {
 		LIGHTS_LEN
 	};
 
-	static constexpr int MATRIX_WIDTH = 32;
-	static constexpr int MATRIX_HEIGHT = 32;
+	static constexpr int MATRIX_WIDTH = Width;
+	static constexpr int MATRIX_HEIGHT = Height;
+	static constexpr int POLY_CHANNELS = PolyChannels;
 	static constexpr int PIXEL_COUNT = MATRIX_WIDTH * MATRIX_HEIGHT;
 	static constexpr int SUBPIXEL_COUNT = 3 * PIXEL_COUNT;
-	static_assert(PORT_MAX_CHANNELS == MATRIX_WIDTH / 2);
+	static_assert(MATRIX_WIDTH % POLY_CHANNELS == 0, "MATRIX_WIDTH must be a multiple of POLY_CHANNELS.");
 
 	bool polyphonic = false;
+	bool double_buffered = true;
 	bool frame = false;
 	bool trigger_last = false;
 	int curX, curY;
@@ -105,16 +108,25 @@ struct RGBMatrix : Module {
 				outputs[XPULSE_OUTPUT].setVoltage(2*sample_counter / sample_count ? 0.0f : 10.0f);
 			outputs[YPULSE_OUTPUT].setVoltage(2*curX / MATRIX_WIDTH ? 0.0f : 10.0f);
 
-			int channels = polyphonic ? PORT_MAX_CHANNELS : 1;
+			int channels = polyphonic ? POLY_CHANNELS : 1;
 			
 			if (curX >= 0 && sample_counter < sample_count) {
 				if (++sample_counter >= sample_count) {
 					sample_counter = 0;
 					for (int i=0; i<channels; ++i) {
 						std::size_t base = 3 * (curY * MATRIX_WIDTH + curX + i);
-						framebuf[base+0] = applyScaleOffset(inputs[R_INPUT].getVoltage(i), params[RSCL_PARAM], params[ROFF_PARAM]);
-						framebuf[base+1] = applyScaleOffset(inputs[G_INPUT].getVoltage(i), params[GSCL_PARAM], params[GOFF_PARAM]);
-						framebuf[base+2] = applyScaleOffset(inputs[B_INPUT].getVoltage(i), params[BSCL_PARAM], params[BOFF_PARAM]);
+						float r = applyScaleOffset(inputs[R_INPUT].getVoltage(i), params[RSCL_PARAM], params[ROFF_PARAM]);
+						float g = applyScaleOffset(inputs[G_INPUT].getVoltage(i), params[GSCL_PARAM], params[GOFF_PARAM]);
+						float b = applyScaleOffset(inputs[B_INPUT].getVoltage(i), params[BSCL_PARAM], params[BOFF_PARAM]);
+						if (double_buffered) {
+							framebuf[base+0] = r;
+							framebuf[base+1] = g;
+							framebuf[base+2] = b;
+						} else {
+							lights[LIGHTS_LEN+base+0].setBrightness(r);
+							lights[LIGHTS_LEN+base+1].setBrightness(g);
+							lights[LIGHTS_LEN+base+2].setBrightness(b);
+						}
 					}
 				} else {
 					return;
@@ -127,8 +139,10 @@ struct RGBMatrix : Module {
 			if (curX >= MATRIX_WIDTH) {
 				curX = 0;
 				if (++curY >= MATRIX_HEIGHT) {
-					for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
-						lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
+					if (double_buffered) {
+						for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
+							lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
+					}
 					frame = false;
 					outputs[X_OUTPUT].setVoltage(0.0f);
 					outputs[Y_OUTPUT].setVoltage(0.0f);
@@ -152,6 +166,7 @@ struct RGBMatrix : Module {
 	json_t* dataToJson() override {
 		json_t* root = json_object();
 		json_object_set_new(root, "polyphonic", json_boolean(polyphonic));
+		json_object_set_new(root, "double_buffered", json_boolean(double_buffered));
 		return root;
 	}
 
@@ -159,11 +174,26 @@ struct RGBMatrix : Module {
 		json_t* item = json_object_get(root, "polyphonic");
 		if (item)
 			polyphonic = json_boolean_value(item);
+
+		item = json_object_get(root, "double_buffered");
+		if (item)
+			double_buffered = json_boolean_value(item);
 	}
 };
 
+template <template <typename T> typename TLight>
+struct LightSizingInfo {
+	static constexpr double offset = 0.0;
+};
+template <>
+struct LightSizingInfo<LargeLight> {
+	static constexpr double offset = 2.0;
+};
+
+template <int Width, int Height, template <typename T> typename TLight = SmallLight, int PolyChannels = PORT_MAX_CHANNELS>
 struct RGBMatrixWidget : ModuleWidget {
-	RGBMatrixWidget(RGBMatrix* module) {
+	using ModuleType = RGBMatrix<Width, Height, PolyChannels>;
+	RGBMatrixWidget(ModuleType* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/RGBMatrix.svg")));
 
@@ -172,43 +202,53 @@ struct RGBMatrixWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(10 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 26.15)), module, RGBMatrix::XPOL_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 41.39)), module, RGBMatrix::YPOL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(50.8, 41.39)), module, RGBMatrix::SAMPLECOUNT_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 57.053)), module, RGBMatrix::RSCL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 57.053)), module, RGBMatrix::ROFF_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 72.399)), module, RGBMatrix::GSCL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 72.399)), module, RGBMatrix::GOFF_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 87.427)), module, RGBMatrix::BSCL_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 87.427)), module, RGBMatrix::BOFF_PARAM));
-		addParam(createParamCentered<CKD6>(mm2px(Vec(18.733, 104.89)), module, RGBMatrix::TRIGGER_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 26.15)), module, ModuleType::XPOL_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(27.305, 41.39)), module, ModuleType::YPOL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(50.8, 41.39)), module, ModuleType::SAMPLECOUNT_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 57.053)), module, ModuleType::RSCL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 57.053)), module, ModuleType::ROFF_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 72.399)), module, ModuleType::GSCL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 72.399)), module, ModuleType::GOFF_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.914, 87.427)), module, ModuleType::BSCL_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.673, 87.427)), module, ModuleType::BOFF_PARAM));
+		addParam(createParamCentered<CKD6>(mm2px(Vec(18.733, 104.89)), module, ModuleType::TRIGGER_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 56.63)), module, RGBMatrix::R_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 72.399)), module, RGBMatrix::G_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 88.063)), module, RGBMatrix::B_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 104.89)), module, RGBMatrix::TRIG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 56.63)), module, ModuleType::R_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 72.399)), module, ModuleType::G_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 88.063)), module, ModuleType::B_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.043, 104.89)), module, ModuleType::TRIG_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 26.15)), module, RGBMatrix::X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 26.15)), module, RGBMatrix::XPULSE_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 41.39)), module, RGBMatrix::Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 41.39)), module, RGBMatrix::YPULSE_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.8, 26.15)), module, RGBMatrix::EOF_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 26.15)), module, ModuleType::X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 26.15)), module, ModuleType::XPULSE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(8.043, 41.39)), module, ModuleType::Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.206, 41.39)), module, ModuleType::YPULSE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.8, 26.15)), module, ModuleType::EOF_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, RGBMatrix::FRAME_LIGHT_R));
+		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, ModuleType::FRAME_LIGHT_R));
 
-		addChild(addLightMatrix<>(mm2px(Vec(60.96, 5.83)), mm2px(Vec(116.84, 116.84)), module, RGBMatrix::LIGHTS_LEN, RGBMatrix::MATRIX_WIDTH, RGBMatrix::MATRIX_HEIGHT));
+		const Vec offset = mm2px(Vec(LightSizingInfo<TLight>::offset, LightSizingInfo<TLight>::offset));
+		addChild(addLightMatrix<TLight<TrueRGBLight>>(mm2px(Vec(60.96, 5.83))+offset, mm2px(Vec(116.84, 116.84))-2*offset, module, ModuleType::LIGHTS_LEN, ModuleType::MATRIX_WIDTH, ModuleType::MATRIX_HEIGHT));
 	}
 
 	void appendContextMenu(Menu* menu) override {
-		RGBMatrix* module = dynamic_cast<RGBMatrix*>(this->module);
-		auto item = createCheckMenuItem("Polyphonic Mode", "",
+		ModuleType* module = dynamic_cast<ModuleType*>(this->module);
+		menu->addChild(new MenuEntry);
+
+		auto item = createCheckMenuItem("Polyphonic mode", "",
 			[module](){ return module->polyphonic; },
 			[module](){ module->polyphonic = !module->polyphonic; }
 		);
-		menu->addChild(new MenuEntry);
+		menu->addChild(item);
+
+		item = createCheckMenuItem("Double-buffered", "",
+			[module](){ return module->double_buffered; },
+			[module](){ module->double_buffered = !module->double_buffered; }
+		);
 		menu->addChild(item);
 	}
 };
 
 
-Model* modelRGBMatrix = createModel<RGBMatrix, RGBMatrixWidget>("RGBMatrix");
+Model* modelRGBMatrix16 = createModel<RGBMatrix<16, 16>, RGBMatrixWidget<16, 16, LargeLight>>("RGBMatrix16");
+Model* modelRGBMatrix = createModel<RGBMatrix<32, 32>, RGBMatrixWidget<32, 32>>("RGBMatrix");
+Model* modelRGBMatrix64 = createModel<RGBMatrix<64, 64>, RGBMatrixWidget<64, 64, SmallSimpleLight>>("RGBMatrix64");

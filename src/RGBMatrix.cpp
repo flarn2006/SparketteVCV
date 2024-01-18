@@ -86,7 +86,8 @@ struct RGBMatrix : Module {
 		lights[FRAME_LIGHT_R].setBrightness(!frame ? 0.5f : 0.0f);
 		lights[FRAME_LIGHT_G].setBrightness(frame_light_pulse.process(args.sampleTime) ? 0.5f : 0.0f);
 		lights[FRAME_LIGHT_B].setBrightness(polyphonic ? 0.5f : 0.0f);
-		outputs[EOF_OUTPUT].setVoltage(curX >= MATRIX_WIDTH-1 && curY == MATRIX_HEIGHT-1 ? 10.0f : 0.0f);
+		int endX = MATRIX_WIDTH - (polyphonic ? POLY_CHANNELS : 1);
+		outputs[EOF_OUTPUT].setVoltage(curX >= endX && curY == MATRIX_HEIGHT-1 ? 10.0f : 0.0f);
 
 		int sample_count = (int)params[SAMPLECOUNT_PARAM].getValue();
 

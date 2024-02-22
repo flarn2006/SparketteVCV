@@ -95,6 +95,15 @@
         "Utility",
         "Waveshaper"
       ]
+    },
+    {
+      "slug": "PolyCat",
+      "name": "PolyCat",
+      "description": "Concatenates up to five polyphonic inputs into a single output.",
+      "tags": [
+        "Polyphonic",
+        "Utility"
+      ]
     }
   ]
 }

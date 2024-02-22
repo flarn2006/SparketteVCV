@@ -17,3 +17,4 @@ extern Model* modelRGBMatrix16;
 extern Model* modelRGBMatrix;
 extern Model* modelRGBMatrix64;
 extern Model* modelHSV2RGB;
+extern Model* modelFunctions;

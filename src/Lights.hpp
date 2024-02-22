@@ -12,6 +12,14 @@ struct TTrueRGBLight : TBase {
 };
 using TrueRGBLight = TTrueRGBLight<>;
 
+template <typename TBase = GrayModuleLightWidget>
+struct TPurpleLight : TBase {
+	TPurpleLight() {
+		this->addBaseColor(nvgRGB(0xDF, 0x2E, 0xEF));
+	}
+};
+using PurpleLight = TPurpleLight<>;
+
 template <typename TLight = SmallLight<TrueRGBLight>>
 Widget* addLightMatrix(Vec topLeft, Vec size, Module* module, int firstID, int width, int height) {
 	double x_increment = size.x / (width - 1);

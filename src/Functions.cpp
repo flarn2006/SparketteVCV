@@ -40,6 +40,9 @@ struct Functions : Module {
 		configOutput(OUT1_OUTPUT, "");
 		configOutput(OUT2_OUTPUT, "");
 		configOutput(OUT3_OUTPUT, "");
+		configBypass(IN1_INPUT, OUT1_OUTPUT);
+		configBypass(IN2_INPUT, OUT2_OUTPUT);
+		configBypass(IN3_INPUT, OUT3_OUTPUT);
 	}
 
 	static constexpr int FUNC_INV10 = 0;
@@ -59,7 +62,7 @@ struct Functions : Module {
 			case FUNC_RELU:
 				return (x < 0.0f) ? 0.0f : x;
 			case FUNC_SIGMOID:
-				return 5.0f / (1.0f + std::exp(-x));
+				return 10.0f / (1.0f + std::exp(-x)) - 5.0f;
 			default:
 				return 0.0f;
 		}

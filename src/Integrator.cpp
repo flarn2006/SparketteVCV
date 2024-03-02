@@ -31,6 +31,9 @@ struct Integrator : Module {
 		LIGHTS_LEN
 	};
 
+	dsp::SchmittTrigger reset_triggers[2];
+	float values[2];
+
 	Integrator() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(MIN_A_PARAM, -10.f, 10.f, -10.f, "Min Value A");
@@ -51,7 +54,25 @@ struct Integrator : Module {
 		configOutput(OUT_B_OUTPUT, "Output B");
 	}
 
+	void processOne(const ProcessArgs& args, ParamId min, ParamId max, ParamId deltaScale, ParamId reset_button, InputId delta, InputId gate, InputId reset, OutputId output, std::size_t array_index) {
+		float& value = values[array_index];
+		if (reset_triggers[array_index].process(inputs[reset].getVoltage()) || params[reset_button].getValue())
+			value = 0.f;
+
+		bool delta_connected = inputs[delta].isConnected();
+		bool gate_status = inputs[gate].isConnected() ? (inputs[gate].getVoltage() >= 1.f) : delta_connected;
+
+		if (gate_status) {
+			float d = args.sampleTime * params[deltaScale].getValue() * (delta_connected ? inputs[delta].getVoltage() : 1.f);
+			value = std::min(params[max].getValue(), std::max(params[min].getValue(), value + d));
+		}
+
+		outputs[output].setVoltage(value);
+	}
+
 	void process(const ProcessArgs& args) override {
+		processOne(args, MIN_A_PARAM, MAX_A_PARAM, DELTA_SCALE_A_PARAM, RESET_A_PARAM, DELTA_A_INPUT, GATE_A_INPUT, RESET_A_INPUT, OUT_A_OUTPUT, 0);
+		processOne(args, MIN_B_PARAM, MAX_B_PARAM, DELTA_SCALE_B_PARAM, RESET_B_PARAM, DELTA_B_INPUT, GATE_B_INPUT, RESET_B_INPUT, OUT_B_OUTPUT, 1);
 	}
 };
 

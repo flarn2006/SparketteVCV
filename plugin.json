@@ -104,6 +104,16 @@
         "Polyphonic",
         "Utility"
       ]
+    },
+    {
+      "slug": "Integrator",
+      "name": "Dual Integrator",
+      "description": "Modulates up to two values over time at variable speed.",
+      "tags": [
+        "Dual",
+        "Dynamics",
+        "Function generator"
+      ]
     }
   ]
 }

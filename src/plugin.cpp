@@ -19,6 +19,7 @@ void init(Plugin* p) {
 	p->addModel(modelHSV2RGB);
 	p->addModel(modelFunctions);
 	p->addModel(modelPolyCat);
+	p->addModel(modelIntegrator);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.

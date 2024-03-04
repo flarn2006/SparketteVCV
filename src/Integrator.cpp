@@ -56,6 +56,7 @@ struct Integrator : Module {
 		configInput(RESET_B_INPUT, "Reset B");
 		configOutput(OUT_A_OUTPUT, "Output A");
 		configOutput(OUT_B_OUTPUT, "Output B");
+		values[0] = values[1] = 0.f;
 	}
 
 	void processOne(const ProcessArgs& args, ParamId min, ParamId max, ParamId deltaScale, ParamId dsr, ParamId reset_button, InputId delta, InputId gate, InputId reset, OutputId output, std::size_t array_index) {
@@ -98,12 +99,12 @@ struct IntegratorWidget : ModuleWidget {
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 20.595)), module, Integrator::MIN_A_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.86, 20.595)), module, Integrator::MAX_A_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(15.24, 30.031)), module, Integrator::DELTA_SCALE_A_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(15.24, 36.031)), module, Integrator::DELTA_SCALE_RANGE_A_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(15.24, 37.031)), module, Integrator::DELTA_SCALE_RANGE_A_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(15.24, 45.202)), module, Integrator::RESET_A_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 77.321)), module, Integrator::MIN_B_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.86, 77.321)), module, Integrator::MAX_B_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(15.24, 86.757)), module, Integrator::DELTA_SCALE_B_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(15.24, 92.757)), module, Integrator::DELTA_SCALE_RANGE_B_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(15.24, 93.757)), module, Integrator::DELTA_SCALE_RANGE_B_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(15.24, 101.928)), module, Integrator::RESET_B_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.86, 33.031)), module, Integrator::DELTA_A_INPUT));

@@ -30,6 +30,10 @@ struct Integrator : Module {
 		OUTPUTS_LEN
 	};
 	enum LightId {
+		MAX_A_LIGHT,
+		MIN_A_LIGHT,
+		MAX_B_LIGHT,
+		MIN_B_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -59,27 +63,33 @@ struct Integrator : Module {
 		values[0] = values[1] = 0.f;
 	}
 
-	void processOne(const ProcessArgs& args, ParamId min, ParamId max, ParamId deltaScale, ParamId dsr, ParamId reset_button, InputId delta, InputId gate, InputId reset, OutputId output, std::size_t array_index) {
+	void processOne(const ProcessArgs& args, ParamId min, ParamId max, ParamId deltaScale, ParamId dsr, ParamId reset_button, InputId delta, InputId gate, InputId reset, OutputId output, LightId max_light, LightId min_light, std::size_t array_index) {
 		float& value = values[array_index];
 		if (reset_triggers[array_index].process(inputs[reset].getVoltage()) || params[reset_button].getValue())
 			value = 0.f;
 
 		bool delta_connected = inputs[delta].isConnected();
 		bool gate_status = inputs[gate].isConnected() ? (inputs[gate].getVoltage() >= 1.f) : delta_connected;
+		float minval = params[min].getValue();
+		float maxval = params[max].getValue();
+		if (minval > maxval)
+			std::swap(minval, maxval);
 
 		if (gate_status) {
 			float d = args.sampleTime * params[deltaScale].getValue() * (delta_connected ? inputs[delta].getVoltage() : 1.f);
 			if (params[dsr].getValue() > 0.5f)
 				d *= 50;
-			value = std::min(params[max].getValue(), std::max(params[min].getValue(), value + d));
+			value = std::min(maxval, std::max(minval, value + d));
 		}
 
 		outputs[output].setVoltage(value);
+		lights[max_light].setBrightness(value >= maxval ? 1.f : 0.f);
+		lights[min_light].setBrightness(value <= minval ? 1.f : 0.f);
 	}
 
 	void process(const ProcessArgs& args) override {
-		processOne(args, MIN_A_PARAM, MAX_A_PARAM, DELTA_SCALE_A_PARAM, DELTA_SCALE_RANGE_A_PARAM, RESET_A_PARAM, DELTA_A_INPUT, GATE_A_INPUT, RESET_A_INPUT, OUT_A_OUTPUT, 0);
-		processOne(args, MIN_B_PARAM, MAX_B_PARAM, DELTA_SCALE_B_PARAM, DELTA_SCALE_RANGE_B_PARAM, RESET_B_PARAM, DELTA_B_INPUT, GATE_B_INPUT, RESET_B_INPUT, OUT_B_OUTPUT, 1);
+		processOne(args, MIN_A_PARAM, MAX_A_PARAM, DELTA_SCALE_A_PARAM, DELTA_SCALE_RANGE_A_PARAM, RESET_A_PARAM, DELTA_A_INPUT, GATE_A_INPUT, RESET_A_INPUT, OUT_A_OUTPUT, MAX_A_LIGHT, MIN_A_LIGHT, 0);
+		processOne(args, MIN_B_PARAM, MAX_B_PARAM, DELTA_SCALE_B_PARAM, DELTA_SCALE_RANGE_B_PARAM, RESET_B_PARAM, DELTA_B_INPUT, GATE_B_INPUT, RESET_B_INPUT, OUT_B_OUTPUT, MAX_B_LIGHT, MIN_B_LIGHT, 1);
 	}
 };
 
@@ -116,6 +126,11 @@ struct IntegratorWidget : ModuleWidget {
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.977, 61.394)), module, Integrator::OUT_A_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.977, 118.12)), module, Integrator::OUT_B_OUTPUT));
+
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(15.24, 18.595)), module, Integrator::MAX_A_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 22.595)), module, Integrator::MIN_A_LIGHT));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(15.24, 75.321)), module, Integrator::MAX_B_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 79.321)), module, Integrator::MIN_B_LIGHT));
 
 		value_text[0] = createWidget<Label>(mm2px(Vec(0.712, 58.08)));
 		value_text[1] = createWidget<Label>(mm2px(Vec(0.712, 114.806)));

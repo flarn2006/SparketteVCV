@@ -39,6 +39,7 @@ struct Integrator : Module {
 
 	dsp::SchmittTrigger reset_triggers[2];
 	float values[2];
+	bool wraparound = false;
 
 	Integrator() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -79,17 +80,40 @@ struct Integrator : Module {
 			float d = args.sampleTime * params[deltaScale].getValue() * (delta_connected ? inputs[delta].getVoltage() : 1.f);
 			if (params[dsr].getValue() > 0.5f)
 				d *= 50;
-			value = std::min(maxval, std::max(minval, value + d));
+			if (wraparound) {
+				float range = maxval - minval;
+				value = minval + std::fmod(value - minval + d + range, range);
+				if (value < minval) value += range;
+			} else {
+				value = std::min(maxval, std::max(minval, value + d));
+			}
 		}
 
 		outputs[output].setVoltage(value);
-		lights[max_light].setBrightness(value >= maxval ? 1.f : 0.f);
-		lights[min_light].setBrightness(value <= minval ? 1.f : 0.f);
+		if (wraparound) {
+			lights[max_light].setBrightness(0.5f);
+			lights[min_light].setBrightness(0.5f);
+		} else {
+			lights[max_light].setBrightness(value >= maxval ? 1.f : 0.f);
+			lights[min_light].setBrightness(value <= minval ? 1.f : 0.f);
+		}
 	}
 
 	void process(const ProcessArgs& args) override {
 		processOne(args, MIN_A_PARAM, MAX_A_PARAM, DELTA_SCALE_A_PARAM, DELTA_SCALE_RANGE_A_PARAM, RESET_A_PARAM, DELTA_A_INPUT, GATE_A_INPUT, RESET_A_INPUT, OUT_A_OUTPUT, MAX_A_LIGHT, MIN_A_LIGHT, 0);
 		processOne(args, MIN_B_PARAM, MAX_B_PARAM, DELTA_SCALE_B_PARAM, DELTA_SCALE_RANGE_B_PARAM, RESET_B_PARAM, DELTA_B_INPUT, GATE_B_INPUT, RESET_B_INPUT, OUT_B_OUTPUT, MAX_B_LIGHT, MIN_B_LIGHT, 1);
+	}
+
+	json_t* dataToJson() override {
+		json_t* root = json_object();
+		json_object_set_new(root, "wraparound", json_boolean(wraparound));
+		return root;
+	}
+
+	void dataFromJson(json_t* root) override {
+		json_t* item = json_object_get(root, "wraparound");
+		if (item)
+			wraparound = json_boolean_value(item);
 	}
 };
 
@@ -149,6 +173,16 @@ struct IntegratorWidget : ModuleWidget {
 		auto m = dynamic_cast<Integrator*>(module);
 		for (int i=0; i<2; ++i)
 			value_text[i]->text = string::f("%0.3f", m->values[i]);
+	}
+
+	void appendContextMenu(Menu* menu) override {
+		if (module == nullptr) return;
+		auto m = dynamic_cast<Integrator*>(module);
+		auto item = createCheckMenuItem("Wraparound", "",
+			[m](){ return m->wraparound; },
+			[m](){ m->wraparound = !m->wraparound; }
+		);
+		menu->addChild(item);
 	}
 };
 

@@ -84,6 +84,7 @@ struct HSV2RGB : Module {
 				v = params[VOFF_PARAM].getValue();
 
 			hsvToRgb(h, s, v, red[i], green[i], blue[i]);
+			red[i] *= 10; green[i] *= 10; blue[i] *= 10;
 		}
 		outputs[RED_OUTPUT].writeVoltages(red);
 		outputs[GREEN_OUTPUT].writeVoltages(green);

@@ -33,9 +33,7 @@ namespace sparkette {
 			case 4: b=c; r=x; break;
 			case 5: r=c; b=x; break;
 		}
-		r = (r + m) * 10;
-		g = (g + m) * 10;
-		b = (b + m) * 10;
+		r += m; g += m; b += m;
 	}
 
 }

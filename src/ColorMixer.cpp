@@ -17,6 +17,8 @@ struct ColorMixer : Module {
 		BG_B_SCL_PARAM,
 		BG_B_OFS_PARAM,
 		BG_MODE_PARAM,
+		LIGHTS_PARAM,
+		CLAMP_PARAM,
 		LAYER_PARAMS_START,
 		PARAMS_LEN = LAYER_PARAMS_START + NUM_LAYERS * PARAMS_PER_LAYER
 	};
@@ -38,9 +40,6 @@ struct ColorMixer : Module {
 		BG_LIGHT_R,
 		BG_LIGHT_G,
 		BG_LIGHT_B,
-		SUM_LIGHT_R,
-		SUM_LIGHT_G,
-		SUM_LIGHT_B,
 		ALPHA_OUT_LIGHT,
 		LAYER_LIGHTS_START,
 		LIGHTS_LEN = LAYER_LIGHTS_START + NUM_LAYERS * LIGHTS_PER_LAYER
@@ -48,6 +47,12 @@ struct ColorMixer : Module {
 
 	struct RGBA {
 		float r, g, b, a;
+		void clamp() {
+			r = std::min(1.f, std::max(0.f, r));
+			g = std::min(1.f, std::max(0.f, g));
+			b = std::min(1.f, std::max(0.f, b));
+			a = std::min(1.f, std::max(0.f, a));
+		}
 	};
 
 	ColorMixer() {
@@ -59,6 +64,8 @@ struct ColorMixer : Module {
 		configParam(BG_B_SCL_PARAM, -1.f, 1.f, 1.f, "Background Blue/Val Scale");
 		configParam(BG_B_OFS_PARAM, 0.f, 1.f, 0.f, "Background Blue/Sat Offset");
 		configParam(BG_MODE_PARAM, 0.f, 2.f, 1.f, "Background Mode");
+		configParam(LIGHTS_PARAM, 0.f, 2.f, 2.f, "Enabled Lights");
+		configParam(CLAMP_PARAM, 0.f, 2.f, 2.f, "Clamp Mode");
 		for (int i=0; i<NUM_LAYERS; ++i) {
 			int param_base = LAYER_PARAMS_START + PARAMS_PER_LAYER * i;
 			int display_num = NUM_LAYERS - i;
@@ -102,7 +109,7 @@ struct ColorMixer : Module {
 		}
 	}
 
-	void processLayer(RGBA* poly_colors, int nchan, int layer_index) {
+	void processLayer(RGBA* poly_colors, int nchan, int layer_index, int lights_mode) {
 		const int input_base = LAYER_INPUTS_START + INPUTS_PER_LAYER * layer_index;
 		const int param_base = LAYER_PARAMS_START + PARAMS_PER_LAYER * layer_index;
 		const int light_base = LAYER_LIGHTS_START + LIGHTS_PER_LAYER * layer_index;
@@ -140,7 +147,7 @@ struct ColorMixer : Module {
 			if (params[param_base+8].getValue() > 0.5f)
 				hsvToRgb(red[i], green[i], blue[i], r, g, b);
 
-			if (i == 0) {
+			if (i == 0 && lights_mode >= 1) {
 				lights[light_base+5].setBrightness(r);
 				lights[light_base+6].setBrightness(g);
 				lights[light_base+7].setBrightness(b);
@@ -151,10 +158,16 @@ struct ColorMixer : Module {
 			poly_colors[i].b = composite(poly_colors[i].b, b, alpha[i], blend_mode);
 		}
 
-		lights[light_base+8].setBrightness(alpha[0]);
-		lights[light_base+9].setBrightness(poly_colors[0].r);
-		lights[light_base+10].setBrightness(poly_colors[0].g);
-		lights[light_base+11].setBrightness(poly_colors[0].b);
+		if (lights_mode >= 2) {
+			lights[light_base+8].setBrightness(alpha[0]);
+			lights[light_base+9].setBrightness(poly_colors[0].r);
+			lights[light_base+10].setBrightness(poly_colors[0].g);
+			lights[light_base+11].setBrightness(poly_colors[0].b);
+		} else {
+			int start = (lights_mode == 1) ? 8 : 5;
+			for (int i=start; i<LIGHTS_PER_LAYER; ++i)
+				lights[light_base+i].setBrightness(0.f);
+		}
 	}
 
 	int readVoltagesOrZero(int input, float* voltages)
@@ -173,6 +186,8 @@ struct ColorMixer : Module {
 
 		RGBA poly_colors[PORT_MAX_CHANNELS];
 		int bgmode = (int)params[BG_MODE_PARAM].getValue();
+		int lights_mode = (int)params[LIGHTS_PARAM].getValue();
+		int clamp_mode = (int)params[CLAMP_PARAM].getValue();
 
 		float voltages[PORT_MAX_CHANNELS];
 		// Red
@@ -203,12 +218,12 @@ struct ColorMixer : Module {
 		lights[BG_LIGHT_B].setBrightness(poly_colors[0].b);
 		lights[ALPHA_OUT_LIGHT].setBrightness(bgmode == 0 ? 0.75f : 0.f);
 
-		for (int i=NUM_LAYERS-1; i>=0; --i)
-			processLayer(poly_colors, PORT_MAX_CHANNELS, i);
-
-		lights[SUM_LIGHT_R].setBrightness(poly_colors[0].r);
-		lights[SUM_LIGHT_G].setBrightness(poly_colors[0].g);
-		lights[SUM_LIGHT_B].setBrightness(poly_colors[0].b);
+		for (int i=NUM_LAYERS-1; i>=0; --i) {
+			processLayer(poly_colors, nchan, i, lights_mode);
+			if (clamp_mode >= 2 || (i == 0 && clamp_mode == 1))
+				for (int j=0; j<nchan; ++j)
+					poly_colors[j].clamp();
+		}
 
 		outputs[R_OUTPUT].setChannels(nchan);
 		outputs[G_OUTPUT].setChannels(nchan);
@@ -251,6 +266,8 @@ struct ColorMixerWidget : ModuleWidget {
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(31.009, 113.039)), module, ColorMixer::BG_B_SCL_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(37.571, 113.039)), module, ColorMixer::BG_B_OFS_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(48.0, 119.918)), module, ColorMixer::BG_MODE_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(77.0, 14.0)), module, ColorMixer::LIGHTS_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(77.0, 27.0)), module, ColorMixer::CLAMP_PARAM));
 		for (int i=0; i<ColorMixer::NUM_LAYERS; ++i) {
 			double height = top + (double)i * row_height;
 			int param_id_base = ColorMixer::LAYER_PARAMS_START + ColorMixer::PARAMS_PER_LAYER * i;
@@ -299,7 +316,6 @@ struct ColorMixerWidget : ModuleWidget {
 		}
 
 		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(43.0, 113.039)), module, ColorMixer::BG_LIGHT_R));
-		addChild(createLightCentered<LargeLight<TrueRGBLight>>(mm2px(Vec(78.74, 45.0)), module, ColorMixer::SUM_LIGHT_R));
 		addChild(createLightCentered<SmallLight<WhiteLight>>(mm2px(Vec(73.75, 98.832)), module, ColorMixer::ALPHA_OUT_LIGHT));
 	}
 };

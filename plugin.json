@@ -114,6 +114,15 @@
         "Dynamics",
         "Function generator"
       ]
+    },
+    {
+      "slug": "ColorMixer",
+      "name": "Color Mixer",
+      "description": "Mixes colors.",
+      "tags": [
+        "Visual",
+        "Mixer"
+      ]
     }
   ]
 }

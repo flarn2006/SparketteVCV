@@ -105,6 +105,12 @@ struct ColorMixer : Module {
 			/* Normal */   case 0: return bottom + (top - bottom) * alpha;
 			/* Addition */ case 1: return bottom + top * alpha;
 			/* Multiply */ case 2: return bottom * (top + (1.f - alpha) * (1.f - top));
+			/* Screen */   case 3: return 1.f - (1.f - bottom) * (1.f - top * alpha);
+			/* Overlay */  case 4:
+				if (top <= 0.5f)
+					return 2.f * bottom * top * alpha + bottom * (1.f - alpha);
+				else
+					return 1.f - 2.f * (1.f - bottom) * (1.f - top * alpha) + bottom * (1.f - alpha);
 			default: return bottom;
 		}
 	}
@@ -217,10 +223,18 @@ struct ColorMixer : Module {
 				hsvToRgb(h, s, v, poly_colors[i].r, poly_colors[i].g, poly_colors[i].b);
 			}
 		}
-		lights[BG_LIGHT_R].setBrightness(poly_colors[0].r);
-		lights[BG_LIGHT_G].setBrightness(poly_colors[0].g);
-		lights[BG_LIGHT_B].setBrightness(poly_colors[0].b);
-		lights[ALPHA_OUT_LIGHT].setBrightness(bgmode == 0 ? 0.75f : 0.f);
+
+		if (bgmode == 0) {
+			lights[BG_LIGHT_R].setBrightness(0.f);
+			lights[BG_LIGHT_G].setBrightness(0.f);
+			lights[BG_LIGHT_B].setBrightness(0.f);
+			lights[ALPHA_OUT_LIGHT].setBrightness(0.75f);
+		} else {
+			lights[BG_LIGHT_R].setBrightness(poly_colors[0].r);
+			lights[BG_LIGHT_G].setBrightness(poly_colors[0].g);
+			lights[BG_LIGHT_B].setBrightness(poly_colors[0].b);
+			lights[ALPHA_OUT_LIGHT].setBrightness(0.f);
+		}
 
 		for (int i=NUM_LAYERS-1; i>=0; --i) {
 			processLayer(poly_colors, nchan, i, lights_mode);

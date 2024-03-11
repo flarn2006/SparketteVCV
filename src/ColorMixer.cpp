@@ -108,6 +108,17 @@ struct ColorMixer : Module {
 			default: return bottom;
 		}
 	}
+	
+	RGBA composite(const RGBA& bottom, const RGBA& top, int blend_mode) {
+		RGBA result;
+		result.r = composite(bottom.r, top.r, top.a, blend_mode);
+		result.g = composite(bottom.g, top.g, top.a, blend_mode);
+		result.b = composite(bottom.b, top.b, top.a, blend_mode);
+		result.a = bottom.a;
+		if (blend_mode == 0)
+			result.a += top.a * (1.f - bottom.a);
+		return result;
+	}
 
 	void processLayer(RGBA* poly_colors, int nchan, int layer_index, int lights_mode) {
 		const int input_base = LAYER_INPUTS_START + INPUTS_PER_LAYER * layer_index;
@@ -125,11 +136,6 @@ struct ColorMixer : Module {
 		// Alpha
 		readVoltagesOrZero(input_base+3, alpha);
 		applyPolyScaleOffset(alpha, nchan, params[param_base+6], params[param_base+7]);
-		for (int i=0; i<nchan; ++i) {
-			float a = poly_colors[i].a;
-			poly_colors[i].a = a + alpha[i] * (1.f - a);
-		}
-
 		// Red
 		readVoltagesOrZero(input_base+0, red);
 		applyPolyScaleOffset(red, nchan, params[param_base], params[param_base+1]);
@@ -153,9 +159,7 @@ struct ColorMixer : Module {
 				lights[light_base+7].setBrightness(b);
 			}
 
-			poly_colors[i].r = composite(poly_colors[i].r, r, alpha[i], blend_mode);
-			poly_colors[i].g = composite(poly_colors[i].g, g, alpha[i], blend_mode);
-			poly_colors[i].b = composite(poly_colors[i].b, b, alpha[i], blend_mode);
+			poly_colors[i] = composite(poly_colors[i], {r, g, b, alpha[i]}, blend_mode);
 		}
 
 		if (lights_mode >= 2) {

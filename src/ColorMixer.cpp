@@ -181,7 +181,7 @@ struct ColorMixer : Module {
 
 	void process(const ProcessArgs& args) override {
 		int nchan = 1;
-		for (int i=LAYER_INPUTS_START; i<INPUTS_LEN; ++i)
+		for (int i=0; i<INPUTS_LEN; ++i)
 			nchan = std::max(nchan, inputs[i].getChannels());
 
 		RGBA poly_colors[PORT_MAX_CHANNELS];

@@ -159,7 +159,7 @@ struct ColorMixer : Module {
 		}
 
 		if (lights_mode >= 2) {
-			lights[light_base+8].setBrightness(alpha[0]);
+			lights[light_base+8].setBrightness(alpha[0] / 2);
 			lights[light_base+9].setBrightness(poly_colors[0].r);
 			lights[light_base+10].setBrightness(poly_colors[0].g);
 			lights[light_base+11].setBrightness(poly_colors[0].b);
@@ -228,6 +228,7 @@ struct ColorMixer : Module {
 		outputs[R_OUTPUT].setChannels(nchan);
 		outputs[G_OUTPUT].setChannels(nchan);
 		outputs[B_OUTPUT].setChannels(nchan);
+		outputs[A_OUTPUT].setChannels(nchan);
 
 		// Red
 		for (int i=0; i<nchan; ++i)
@@ -241,6 +242,10 @@ struct ColorMixer : Module {
 		for (int i=0; i<nchan; ++i)
 			voltages[i] = poly_colors[i].b * 10;
 		outputs[B_OUTPUT].writeVoltages(voltages);
+		// Alpha
+		for (int i=0; i<nchan; ++i)
+			voltages[i] = poly_colors[i].a * 10;
+		outputs[A_OUTPUT].writeVoltages(voltages);
 	}
 };
 

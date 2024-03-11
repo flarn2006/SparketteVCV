@@ -83,23 +83,8 @@ struct HSV2RGB : Module {
 			else
 				v = params[VOFF_PARAM].getValue();
 
-			float r=0, g=0, b=0;
-			int sector = (int)(h * 6) % 6;
-			float c = v * s;
-			float x = c * (1 - std::fabs(std::fmod(h * 6, 2) - 1));
-			float m = v - c;
-
-			switch (sector) {
-				case 0: r=c; g=x; break;
-				case 1: g=c; r=x; break;
-				case 2: g=c; b=x; break;
-				case 3: b=c; g=x; break;
-				case 4: b=c; r=x; break;
-				case 5: r=c; b=x; break;
-			}
-			red[i] = (r + m) * 10;
-			green[i] = (g + m) * 10;
-			blue[i] = (b + m) * 10;
+			hsvToRgb(h, s, v, red[i], green[i], blue[i]);
+			red[i] *= 10; green[i] *= 10; blue[i] *= 10;
 		}
 		outputs[RED_OUTPUT].writeVoltages(red);
 		outputs[GREEN_OUTPUT].writeVoltages(green);

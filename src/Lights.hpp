@@ -2,8 +2,6 @@
 
 namespace sparkette {
 
-const auto PURPLE = nvgRGB(0xDF, 0x2E, 0xEF);
-
 template <typename TBase = GrayModuleLightWidget>
 struct TTrueRGBLight : TBase {
 	TTrueRGBLight() {
@@ -17,7 +15,7 @@ using TrueRGBLight = TTrueRGBLight<>;
 template <typename TBase = GrayModuleLightWidget>
 struct TPurpleLight : TBase {
 	TPurpleLight() {
-		this->addBaseColor(PURPLE);
+		this->addBaseColor(componentlibrary::SCHEME_PURPLE);
 	}
 };
 using PurpleLight = TPurpleLight<>;
@@ -25,7 +23,7 @@ using PurpleLight = TPurpleLight<>;
 template <typename TBase = GrayModuleLightWidget>
 struct TFiveColorLight : TBase {
 	TFiveColorLight() {
-		this->addBaseColor(PURPLE);
+		this->addBaseColor(componentlibrary::SCHEME_PURPLE);
 		this->addBaseColor(componentlibrary::SCHEME_BLUE);
 		this->addBaseColor(componentlibrary::SCHEME_GREEN);
 		this->addBaseColor(componentlibrary::SCHEME_YELLOW);

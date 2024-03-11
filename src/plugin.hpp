@@ -19,3 +19,5 @@ extern Model* modelRGBMatrix64;
 extern Model* modelHSV2RGB;
 extern Model* modelFunctions;
 extern Model* modelPolyCat;
+extern Model* modelIntegrator;
+extern Model* modelColorMixer;

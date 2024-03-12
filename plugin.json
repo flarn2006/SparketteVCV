@@ -118,7 +118,7 @@
     {
       "slug": "ColorMixer",
       "name": "Color Mixer",
-      "description": "Mixes colors.",
+      "description": "Provides layers for compositing images, e.g. for RGB Matrix modules.",
       "tags": [
         "Visual",
         "Mixer"

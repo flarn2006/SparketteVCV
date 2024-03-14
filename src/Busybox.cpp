@@ -195,7 +195,9 @@ struct Busybox : Module {
 			}
 
 			light->setBrightness(envelope[0] / 10);
+			env_out->setChannels(nchan);
 			env_out->writeVoltages(envelope);
+			vca_out->setChannels(nchan);
 			vca_out->writeVoltages(vca);
 		}
 	};

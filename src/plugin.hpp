@@ -21,3 +21,4 @@ extern Model* modelFunctions;
 extern Model* modelPolyCat;
 extern Model* modelIntegrator;
 extern Model* modelColorMixer;
+extern Model* modelBusybox;

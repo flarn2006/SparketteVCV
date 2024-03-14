@@ -123,6 +123,16 @@
         "Visual",
         "Mixer"
       ]
+    },
+    {
+      "slug": "Busybox",
+      "name": "Busybox",
+      "description": "Multipurpose module containing four LFO's, two ADSR+VCA envelopes, and a noise generator.",
+      "tags": [
+        "Envelope generator",
+        "Low-frequency oscillator",
+        "Noise"
+      ]
     }
   ]
 }

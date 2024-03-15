@@ -10,6 +10,7 @@ struct Busybox : Module {
 		LFREQ2_PARAM,
 		LFREQ3_PARAM,
 		LFREQ4_PARAM,
+		LFOPW_PARAM,
 		LFORESET_PARAM,
 		ENV1A_PARAM,
 		ENV1D_PARAM,
@@ -82,7 +83,8 @@ struct Busybox : Module {
 		float wave(float t) override { return 1.f - 2.f*std::abs(0.5f - t); }
 	};
 	struct SquareLFO : LFO {
-		float wave(float t) override { return t < 0.5f; }
+		Quantity* pulseWidth;
+		float wave(float t) override { return t < pulseWidth->getValue(); }
 	};
 	struct SineLFO : LFO {
 		float wave(float t) override { return (std::sin(t * 2.f*M_PI) + 1) / 2; }
@@ -211,6 +213,7 @@ struct Busybox : Module {
 		configParam(LFREQ2_PARAM, 0.f, 200.f, 2.f, "LFO 2 Frequency");
 		configParam(LFREQ3_PARAM, 0.f, 200.f, 2.f, "LFO 3 Frequency");
 		configParam(LFREQ4_PARAM, 0.f, 200.f, 2.f, "LFO 4 Frequency");
+		configParam(LFOPW_PARAM, 0.f, 1.f, 0.5f, "LFO 3 Pulse Width");
 		configParam(LFORESET_PARAM, 0.f, 1.f, 0.f, "LFO Reset");
 		configParam(ENV1A_PARAM, 0.f, 4.f, 0.f, "Envelope 1 Attack");
 		configParam(ENV1D_PARAM, 0.f, 4.f, 0.5f, "Envelope 1 Decay");
@@ -255,6 +258,7 @@ struct Busybox : Module {
 		squareLfo.light = &lights[LFO3_LIGHT];
 		squareLfo.out = &outputs[LFO3_OUTPUT];
 		squareLfo.out2 = &outputs[LFO3INV_OUTPUT];
+		squareLfo.pulseWidth = paramQuantities[LFOPW_PARAM];
 		lfos[2] = &squareLfo;
 
 		sineLfo.freq = paramQuantities[LFREQ4_PARAM];
@@ -315,6 +319,7 @@ struct BusyboxWidget : ModuleWidget {
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(5.08, 23.61)), module, Busybox::LFREQ2_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(5.08, 33.77)), module, Busybox::LFREQ3_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(5.08, 43.93)), module, Busybox::LFREQ4_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(19.0, 31.0)), module, Busybox::LFOPW_PARAM));
 		addParam(createParamCentered<BefacoPush>(mm2px(Vec(15.24, 54.09)), module, Busybox::LFORESET_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 74.41)), module, Busybox::ENV1A_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.4, 74.41)), module, Busybox::ENV1D_PARAM));

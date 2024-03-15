@@ -62,11 +62,13 @@ struct Busybox : Module {
 		Output *out, *out2;
 		float phase = 0.f;
 
+		static constexpr float FREQ_DISPLAY_BASE = 2.f;
+
 		// Assume 0<=t<=1. Return value must be in same range.
 		virtual float wave(float t) = 0;
 
 		void process(const ProcessArgs& args) {
-			phase = std::fmod(phase + freq->getValue() * args.sampleTime, 1.f);
+			phase = std::fmod(phase + dsp::approxExp2_taylor5(freq->getValue()) * args.sampleTime, 1.f);
 			float y = wave(phase);
 			light->setBrightness(y);
 			out->setVoltage(y * 10);
@@ -209,11 +211,11 @@ struct Busybox : Module {
 
 	Busybox() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(LFREQ1_PARAM, 0.f, 200.f, 2.f, "LFO 1 Frequency");
-		configParam(LFREQ2_PARAM, 0.f, 200.f, 2.f, "LFO 2 Frequency");
-		configParam(LFREQ3_PARAM, 0.f, 200.f, 2.f, "LFO 3 Frequency");
-		configParam(LFREQ4_PARAM, 0.f, 200.f, 2.f, "LFO 4 Frequency");
-		configParam(LFOPW_PARAM, 0.f, 1.f, 0.5f, "LFO 3 Pulse Width");
+		configParam(LFREQ1_PARAM, -3.f, 8.f, 2.f, "LFO 1 Frequency", " Hz", LFO::FREQ_DISPLAY_BASE);
+		configParam(LFREQ2_PARAM, -3.f, 8.f, 2.f, "LFO 2 Frequency", " Hz", LFO::FREQ_DISPLAY_BASE);
+		configParam(LFREQ3_PARAM, -3.f, 8.f, 2.f, "LFO 3 Frequency", " Hz", LFO::FREQ_DISPLAY_BASE);
+		configParam(LFREQ4_PARAM, -3.f, 8.f, 2.f, "LFO 4 Frequency", " Hz", LFO::FREQ_DISPLAY_BASE);
+		configParam(LFOPW_PARAM, 0.f, 1.f, 0.5f, "LFO 3 Pulse Width", "%", 0.f, 100.f);
 		configParam(LFORESET_PARAM, 0.f, 1.f, 0.f, "LFO Reset");
 		configParam(ENV1A_PARAM, 0.f, 4.f, 0.f, "Envelope 1 Attack");
 		configParam(ENV1D_PARAM, 0.f, 4.f, 0.5f, "Envelope 1 Decay");

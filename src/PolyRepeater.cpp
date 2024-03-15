@@ -30,6 +30,10 @@ struct PolyRepeater : Module {
 		configOutput(OUT2_OUTPUT, "");
 		configOutput(OUT3_OUTPUT, "");
 		configOutput(OUT4_OUTPUT, "");
+		configBypass(IN_INPUT, OUT1_OUTPUT);
+		configBypass(IN_INPUT, OUT2_OUTPUT);
+		configBypass(IN_INPUT, OUT3_OUTPUT);
+		configBypass(IN_INPUT, OUT4_OUTPUT);
 	}
 
 	void process(const ProcessArgs& args) override {

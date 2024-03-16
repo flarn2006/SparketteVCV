@@ -244,6 +244,9 @@ struct Busybox : Module {
 		configOutput(ENV2_OUTPUT, "Envelope 2");
 		configOutput(ENV2VCA_OUTPUT, "Envelope 2 VCA");
 
+		configBypass(ENV1VCA_INPUT, ENV1VCA_OUTPUT);
+		configBypass(ENV2VCA_INPUT, ENV2VCA_OUTPUT);
+
 		sawLfo.freq = paramQuantities[LFREQ1_PARAM];
 		sawLfo.light = &lights[LFO1_LIGHT];
 		sawLfo.out = &outputs[LFO1_OUTPUT];

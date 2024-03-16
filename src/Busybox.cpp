@@ -194,15 +194,22 @@ struct Busybox : Module {
 						envelope[i] = setpoint[i] * (1.f - time[i] / r);
 						break;
 				}
-
-				vca[i] *= envelope[i] / 10;
 			}
+
+			int vca_nchan = vca_in->getChannels();
+			for (int i=0; i<vca_nchan; ++i)
+				vca[i] *= envelope[(nchan == 1) ? 0 : i] / 10.f;
 
 			light->setBrightness(envelope[0] / 10);
 			env_out->setChannels(nchan);
 			env_out->writeVoltages(envelope);
-			vca_out->setChannels(nchan);
-			vca_out->writeVoltages(vca);
+			if (vca_nchan > 0) {
+				vca_out->setChannels(vca_nchan);
+				vca_out->writeVoltages(vca);
+			} else {
+				vca_out->setChannels(1);
+				vca_out->setVoltage(0.f);
+			}
 		}
 	};
 

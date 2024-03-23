@@ -228,7 +228,7 @@ struct RGBMatrixWidget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<TrueRGBLight>>(mm2px(Vec(53.34, 104.89)), module, ModuleType::FRAME_LIGHT_R));
 
 		const Vec offset = mm2px(Vec(LightSizingInfo<TLight>::offset, LightSizingInfo<TLight>::offset));
-		addChild(addLightMatrix<TLight<TrueRGBLight>>(mm2px(Vec(60.96, 5.83))+offset, mm2px(Vec(116.84, 116.84))-2*offset, module, ModuleType::LIGHTS_LEN, ModuleType::MATRIX_WIDTH, ModuleType::MATRIX_HEIGHT));
+		addChild(createLightMatrix<TLight<TrueRGBLight>>(mm2px(Vec(60.96, 5.83))+offset, mm2px(Vec(116.84, 116.84))-2*offset, module, ModuleType::LIGHTS_LEN, ModuleType::MATRIX_WIDTH, ModuleType::MATRIX_HEIGHT));
 	}
 
 	void appendContextMenu(Menu* menu) override {

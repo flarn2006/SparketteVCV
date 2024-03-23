@@ -65,7 +65,7 @@ struct Busybox : Module {
 		static constexpr float FREQ_DISPLAY_BASE = 2.f;
 
 		// Assume 0<=t<=1. Return value must be in same range.
-		virtual float wave(float t) = 0;
+		virtual float wave(float t) const = 0;
 
 		void process(const ProcessArgs& args) {
 			phase = std::fmod(phase + dsp::approxExp2_taylor5(freq->getValue()) * args.sampleTime, 1.f);
@@ -79,17 +79,17 @@ struct Busybox : Module {
 	};
 
 	struct SawLFO : LFO {
-		float wave(float t) override { return t; }
+		float wave(float t) const override { return t; }
 	};
 	struct TriangleLFO : LFO {
-		float wave(float t) override { return 1.f - 2.f*std::abs(0.5f - t); }
+		float wave(float t) const override { return 1.f - 2.f*std::abs(0.5f - t); }
 	};
 	struct SquareLFO : LFO {
 		Quantity* pulseWidth;
-		float wave(float t) override { return t < pulseWidth->getValue(); }
+		float wave(float t) const override { return t < pulseWidth->getValue(); }
 	};
 	struct SineLFO : LFO {
-		float wave(float t) override { return (std::sin(t * 2.f*M_PI) + 1) / 2; }
+		float wave(float t) const override { return (std::sin(t * 2.f*M_PI) + 1) / 2; }
 	};
 
 	static constexpr std::size_t LFO_COUNT = 4;

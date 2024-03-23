@@ -36,4 +36,46 @@ namespace sparkette {
 		r += m; g += m; b += m;
 	}
 
+	int transform2DByMatrixInput(int nchan, const float* channels, float& x, float& y) {
+		if (nchan >= 6) {
+			float xt = x * channels[0] + y * channels[1] + channels[2];
+			y *= channels[4];
+			y += x * channels[3] + channels[5];
+			x = xt;
+			return 1 | ((nchan > 6) << 1);
+		} else if (nchan >= 4) {
+			float xt = x * channels[0] + y * channels[1];
+			y *= channels[3];
+			y += x * channels[2];
+			x = xt;
+			return 1 | ((nchan > 4) << 1);
+		} else {
+			return 2;
+		}
+	}
+
+	int transform2DByMatrixInput(Input& input, float& x, float& y) {
+		int nchan = input.getChannels();
+		if (nchan > 0) {
+			float channels[PORT_MAX_CHANNELS];
+			input.readVoltages(channels);
+			return transform2DByMatrixInput(nchan, channels, x, y);
+		} else {
+			return 0;
+		}
+	}
+
+	int transform2DByMatrixInput(int matrix_nchan, const float* matrix_channels, std::size_t nchan, float* x, float* y) {
+		int result = 0;
+		for (std::size_t i=0; i<nchan; ++i)
+			result = transform2DByMatrixInput(matrix_nchan, matrix_channels, x[i], y[i]);
+		return result;
+	}
+
+	int transform2DByMatrixInput(Input& input, std::size_t nchan, float* x, float* y) {
+		int matrix_nchan = input.getChannels();
+		float channels[PORT_MAX_CHANNELS];
+		input.readVoltages(channels);
+		return transform2DByMatrixInput(matrix_nchan, channels, nchan, x, y);
+	}
 }

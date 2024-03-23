@@ -133,6 +133,33 @@
         "Low-frequency oscillator",
         "Noise"
       ]
+    },
+    {
+      "slug": "Patterns",
+      "name": "Patterns",
+      "description": "Visual patterns for use with RGB Matrix and Color Mixer",
+      "tags": [
+        "Visual",
+        "Function generator"
+      ]
+    },
+    {
+      "slug": "MagicSparkle",
+      "name": "Magic Sparkle",
+      "description": "The magic of Sparktopia",
+      "tags": [
+        "Effect"
+      ]
+    },
+    {
+      "slug": "RAM40964",
+      "name": "RAM-40964",
+      "description": "64\u00d764\u00d74 planar random access memory, designed with RGB Matrix in mind",
+      "tags": [
+        "Digital",
+        "Sample and hold",
+        "Sequencer"
+      ]
     }
   ]
 }

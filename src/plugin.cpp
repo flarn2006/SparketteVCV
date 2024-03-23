@@ -22,6 +22,9 @@ void init(Plugin* p) {
 	p->addModel(modelIntegrator);
 	p->addModel(modelColorMixer);
 	p->addModel(modelBusybox);
+	p->addModel(modelPatterns);
+	p->addModel(modelMagicSparkle);
+	p->addModel(modelRAM40964);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.

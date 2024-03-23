@@ -33,7 +33,7 @@ struct TFiveColorLight : TBase {
 using FiveColorLight = TFiveColorLight<>;
 
 template <typename TLight = SmallLight<TrueRGBLight>>
-Widget* addLightMatrix(Vec topLeft, Vec size, Module* module, int firstID, int width, int height) {
+Widget* createLightMatrix(Vec topLeft, Vec size, Module* module, int firstID, int width, int height) {
 	double x_increment = size.x / (width - 1);
 	double y_increment = size.y / (height - 1);
 

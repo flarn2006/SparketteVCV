@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "Lights.hpp"
 #include "Knobs.hpp"
+#include <cstring>
 
 using namespace sparkette;
 
@@ -42,29 +43,21 @@ struct RAM40964 : Module {
 		OUTPUTS_LEN
 	};
 	enum LightId {
-		XBIT5_LIGHT,
-		XBIT4_LIGHT,
-		XBIT3_LIGHT,
-		XBIT2_LIGHT,
-		XBIT1_LIGHT,
-		XBIT0_LIGHT,
-		YBIT5_LIGHT,
-		YBIT4_LIGHT,
-		YBIT3_LIGHT,
-		YBIT2_LIGHT,
-		YBIT1_LIGHT,
-		YBIT0_LIGHT,
 		DATA0_LIGHT,
 		DATA1_LIGHT,
 		DATA2_LIGHT,
 		DATA3_LIGHT,
-		DATA3_LIGHT_R,
 		WRITE_LIGHT,
-		PLANE0_LIGHT,
-		PLANE1_LIGHT,
-		PLANE2_LIGHT,
-		PLANE3_LIGHT,
-		MATRIX_LIGHT_START,
+		CH_PLANE0_LIGHTS_G,
+		CH_PLANE0_LIGHTS_R,
+		CH_PLANE1_LIGHTS_G = CH_PLANE0_LIGHTS_G + 2*PORT_MAX_CHANNELS,
+		CH_PLANE1_LIGHTS_R,
+		CH_PLANE2_LIGHTS_G = CH_PLANE1_LIGHTS_G + 2*PORT_MAX_CHANNELS,
+		CH_PLANE2_LIGHTS_R,
+		CH_PLANE3_LIGHTS_G = CH_PLANE2_LIGHTS_G + 2*PORT_MAX_CHANNELS,
+		CH_PLANE3_LIGHTS_R,
+		CH_WRITE_LIGHTS = CH_PLANE3_LIGHTS_G + 2*PORT_MAX_CHANNELS,
+		MATRIX_LIGHT_START = CH_WRITE_LIGHTS + PORT_MAX_CHANNELS,
 		LIGHTS_LEN = MATRIX_LIGHT_START + 3*MATRIX_WIDTH*MATRIX_HEIGHT
 	};
 
@@ -102,6 +95,11 @@ struct RAM40964 : Module {
 		configOutput(DATA3_OUTPUT, "Plane 3 CV");
 		paramQuantities[X_PARAM]->snapEnabled = true;
 		paramQuantities[Y_PARAM]->snapEnabled = true;
+		clearData();
+	}
+
+	void clearData() {
+		std::memset(data, 0, sizeof(data));
 	}
 
 	void updateDataLights(int address) {
@@ -131,6 +129,12 @@ struct RAM40964 : Module {
 		int ya_nchan = inputs[Y_INPUT].getChannels();
 		int xoff = (int)params[X_PARAM].getValue();
 		int yoff = (int)params[Y_PARAM].getValue();
+		bool data_dirty = false;
+
+		if (clear_trigger.process(inputs[CLEAR_INPUT].getVoltage())) {
+			clearData();
+			data_dirty = true;
+		}
 
 		int addresses[PORT_MAX_CHANNELS];
 		int addr_count = std::max(xa_nchan, ya_nchan);
@@ -183,17 +187,24 @@ struct RAM40964 : Module {
 		float write_gates[PORT_MAX_CHANNELS];
 		inputs[WRITE_INPUT].readVoltages(write_gates);
 		float plane_lastval[PLANE_COUNT];
-		for (int i=0; i<write_count; ++i) {
-			if (write_trigger[i].process(write_gates[i]) || write_all) {
-				wrote_some = true;
-				for (int j=0; j<PLANE_COUNT; ++j) {
-					if (i < planes_nchan[j])
-						plane_lastval[j] = to_write[j][i] * params[DATA0_PARAM+j].getValue();
-					else if (i == 0)
-						plane_lastval[j] = 10.f * params[DATA0_PARAM+j].getValue();
-					data[addresses[i]][j] = plane_lastval[j];
-					updateDataLights(addresses[i]);
+		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
+			if (i < write_count) {
+				if (write_trigger[i].process(write_gates[i]) || write_all) {
+					wrote_some = true;
+					for (int j=0; j<PLANE_COUNT; ++j) {
+						if (i < planes_nchan[j])
+							plane_lastval[j] = to_write[j][i] * params[DATA0_PARAM+j].getValue();
+						else if (i == 0)
+							plane_lastval[j] = 10.f * params[DATA0_PARAM+j].getValue();
+						data[addresses[i]][j] = plane_lastval[j];
+						updateDataLights(addresses[i]);
+					}
+					lights[CH_WRITE_LIGHTS+i].setBrightness(1.f);
+				} else {
+					lights[CH_WRITE_LIGHTS+i].setBrightness(0.2f);
 				}
+			} else {
+				lights[CH_WRITE_LIGHTS+i].setBrightness(0.f);
 			}
 		}
 
@@ -201,12 +212,27 @@ struct RAM40964 : Module {
 
 		int last_dispmode = dispmode;
 		dispmode = (int)params[DISPMODE_PARAM].getValue();
-		lights[PLANE0_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
-		lights[PLANE1_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
-		lights[PLANE2_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
-		lights[PLANE3_LIGHT].setBrightness(dispmode ? 0.f : 1.f);
+		lights[DATA0_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
+		lights[DATA1_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
+		lights[DATA2_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
+		lights[DATA3_LIGHT].setBrightness(dispmode ? 0.f : 1.f);
 
-		if (brightness != last_brightness || dispmode != last_dispmode)
+		const int plane_light_starts[4] = {CH_PLANE0_LIGHTS_G, CH_PLANE1_LIGHTS_G, CH_PLANE2_LIGHTS_G, CH_PLANE3_LIGHTS_G};
+		for (int i=0; i<PLANE_COUNT; ++i) {
+			float voltages[PORT_MAX_CHANNELS];
+			for (int j=0; j<addr_count; ++j)
+				voltages[j] = data[addresses[j]][i];
+			outputs[DATA0_OUTPUT+i].setChannels(addr_count);
+			outputs[DATA0_OUTPUT+i].writeVoltages(voltages);
+			for (int j=0; j<PORT_MAX_CHANNELS; ++j) {
+				int light_base = plane_light_starts[i] + 2*j;
+				float value = data[addresses[j]][i] / 10;
+				lights[light_base+0].setBrightness(value);
+				lights[light_base+1].setBrightness(-value);
+			}
+		}
+
+		if (data_dirty || brightness != last_brightness || dispmode != last_dispmode)
 			updateDataLights();
 	}
 };
@@ -248,27 +274,19 @@ struct RAM40964Widget : ModuleWidget {
 		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(109.22, 84.676)), module, RAM40964::DATA2_OUTPUT));
 		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(109.432, 97.376)), module, RAM40964::DATA3_OUTPUT));
 
-		addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(48.26, 10.91)), module, RAM40964::XBIT5_LIGHT));
-		addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(55.88, 10.91)), module, RAM40964::XBIT4_LIGHT));
-		addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(63.5, 10.91)), module, RAM40964::XBIT3_LIGHT));
-		addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(71.12, 10.91)), module, RAM40964::XBIT2_LIGHT));
-		addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(78.74, 10.91)), module, RAM40964::XBIT1_LIGHT));
-		addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(86.36, 10.91)), module, RAM40964::XBIT0_LIGHT));
-		addChild(createLightCentered<LargeLight<PurpleLight>>(mm2px(Vec(48.26, 23.61)), module, RAM40964::YBIT5_LIGHT));
-		addChild(createLightCentered<LargeLight<PurpleLight>>(mm2px(Vec(55.88, 23.61)), module, RAM40964::YBIT4_LIGHT));
-		addChild(createLightCentered<LargeLight<PurpleLight>>(mm2px(Vec(63.5, 23.61)), module, RAM40964::YBIT3_LIGHT));
-		addChild(createLightCentered<LargeLight<PurpleLight>>(mm2px(Vec(71.12, 23.61)), module, RAM40964::YBIT2_LIGHT));
-		addChild(createLightCentered<LargeLight<PurpleLight>>(mm2px(Vec(78.74, 23.61)), module, RAM40964::YBIT1_LIGHT));
-		addChild(createLightCentered<LargeLight<PurpleLight>>(mm2px(Vec(86.36, 23.61)), module, RAM40964::YBIT0_LIGHT));
+		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
+			float x = 50.0 + 2.8*i;
+			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 7.5)), module, RAM40964::CH_PLANE0_LIGHTS_G+2*i));
+			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 12.5)), module, RAM40964::CH_PLANE1_LIGHTS_G+2*i));
+			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 17.5)), module, RAM40964::CH_PLANE2_LIGHTS_G+2*i));
+			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 22.5)), module, RAM40964::CH_PLANE3_LIGHTS_G+2*i));
+			addChild(createLightCentered<SmallLight<YellowLight>>(mm2px(Vec(x, 27.5)), module, RAM40964::CH_WRITE_LIGHTS+i));
+		}
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(102.388, 56.236)), module, RAM40964::DATA0_LIGHT));
 		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(102.388, 68.936)), module, RAM40964::DATA1_LIGHT));
 		addChild(createLightCentered<MediumLight<BlueLight>>(mm2px(Vec(102.388, 81.636)), module, RAM40964::DATA2_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenRedLight>>(mm2px(Vec(102.388, 94.336)), module, RAM40964::DATA3_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(115.44, 59.276)), module, RAM40964::PLANE0_LIGHT));
-		addChild(createLightCentered<SmallLight<GreenLight>>(mm2px(Vec(115.44, 71.976)), module, RAM40964::PLANE1_LIGHT));
-		addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(115.44, 84.676)), module, RAM40964::PLANE2_LIGHT));
-		addChild(createLightCentered<SmallLight<YellowLight>>(mm2px(Vec(115.44, 97.376)), module, RAM40964::PLANE3_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(102.0, 47.0)), module, RAM40964::WRITE_LIGHT));
+		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.388, 94.336)), module, RAM40964::DATA3_LIGHT));
+		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.0, 47.0)), module, RAM40964::WRITE_LIGHT));
 
 		// mm2px(Vec(25.4, 10.16))
 		addChild(createWidget<Widget>(mm2px(Vec(15.24, 5.83))));

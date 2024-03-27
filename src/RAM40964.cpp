@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "Lights.hpp"
 #include "Knobs.hpp"
+#include "Widgets.hpp"
 #include <cstring>
 
 using namespace sparkette;
@@ -65,8 +66,8 @@ struct RAM40964 : Module {
 	int addrX = 0, addrY = 0;
 	int dispmode = 0;
 	float brightness = 0.5f;
-	dsp::SchmittTrigger write_trigger[PORT_MAX_CHANNELS];
 	dsp::SchmittTrigger clear_trigger;
+	bool hexMode = false;
 
 	RAM40964() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -152,7 +153,7 @@ struct RAM40964 : Module {
 				x += (int)(xa[i] / 10 * (MATRIX_WIDTH*MATRIX_HEIGHT-1));
 				addresses[i] = MATRIX_WIDTH * y + x;
 			} else if (i > 0) {
-				addresses[i] = addresses[i-1] + 1;
+				addresses[i] = (addresses[i-1] + 1) % (MATRIX_WIDTH*MATRIX_HEIGHT);
 			} else {
 				addresses[i] = MATRIX_WIDTH * y + x;
 			}
@@ -162,23 +163,26 @@ struct RAM40964 : Module {
 				addresses[i] = MATRIX_WIDTH*MATRIX_HEIGHT;
 		}
 
+		addrX = addresses[0] % MATRIX_WIDTH;
+		addrY = addresses[0] / MATRIX_WIDTH;
+
 		int planes_nchan[PLANE_COUNT];
 		float to_write[PLANE_COUNT][PORT_MAX_CHANNELS];
 		planes_nchan[0] = inputs[DATA0_INPUT].getChannels();
 		inputs[DATA0_INPUT].readVoltages(to_write[0]);
-		planes_nchan[1] = inputs[DATA0_INPUT].getChannels();
+		planes_nchan[1] = inputs[DATA1_INPUT].getChannels();
 		inputs[DATA1_INPUT].readVoltages(to_write[1]);
-		planes_nchan[2] = inputs[DATA0_INPUT].getChannels();
+		planes_nchan[2] = inputs[DATA2_INPUT].getChannels();
 		inputs[DATA2_INPUT].readVoltages(to_write[2]);
-		planes_nchan[3] = inputs[DATA0_INPUT].getChannels();
+		planes_nchan[3] = inputs[DATA3_INPUT].getChannels();
 		inputs[DATA3_INPUT].readVoltages(to_write[3]);
 
 		int write_count = inputs[WRITE_INPUT].getChannels();
 		bool write_all = params[WRITE_PARAM].getValue() > 0.5f;
-		if (!write_all && write_count == 1 && write_trigger[0].process(inputs[WRITE_INPUT].getVoltage()))
+		if (!write_all && write_count == 1 && inputs[WRITE_INPUT].getVoltage() > 0.5f)
 			write_all = true;
 		if (write_all)
-			write_count = addr_count;
+			write_count = std::max(write_count, addr_count);
 		bool wrote_some = write_all;
 
 		float last_brightness = brightness;
@@ -187,21 +191,21 @@ struct RAM40964 : Module {
 		float write_gates[PORT_MAX_CHANNELS];
 		inputs[WRITE_INPUT].readVoltages(write_gates);
 		float plane_lastval[PLANE_COUNT];
+		for (int i=0; i<PLANE_COUNT; ++i)
+			plane_lastval[i] = 10.f * params[DATA0_PARAM+i].getValue();
 		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
 			if (i < write_count) {
-				if (write_trigger[i].process(write_gates[i]) || write_all) {
+				if (write_gates[i] > 0.5f || write_all) {
 					wrote_some = true;
 					for (int j=0; j<PLANE_COUNT; ++j) {
 						if (i < planes_nchan[j])
 							plane_lastval[j] = to_write[j][i] * params[DATA0_PARAM+j].getValue();
-						else if (i == 0)
-							plane_lastval[j] = 10.f * params[DATA0_PARAM+j].getValue();
 						data[addresses[i]][j] = plane_lastval[j];
 						updateDataLights(addresses[i]);
 					}
 					lights[CH_WRITE_LIGHTS+i].setBrightness(1.f);
 				} else {
-					lights[CH_WRITE_LIGHTS+i].setBrightness(0.2f);
+					lights[CH_WRITE_LIGHTS+i].setBrightness(0.1f);
 				}
 			} else {
 				lights[CH_WRITE_LIGHTS+i].setBrightness(0.f);
@@ -232,6 +236,8 @@ struct RAM40964 : Module {
 			}
 		}
 
+		hexMode = params[BASE_PARAM].getValue() > 0.5f;
+
 		if (data_dirty || brightness != last_brightness || dispmode != last_dispmode)
 			updateDataLights();
 	}
@@ -239,6 +245,10 @@ struct RAM40964 : Module {
 
 
 struct RAM40964Widget : ModuleWidget {
+	SevenSegmentDisplay* xdisp;
+	SevenSegmentDisplay* ydisp;
+	bool lastHexMode = false;
+
 	RAM40964Widget(RAM40964* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/RAM40964.svg")));
@@ -280,20 +290,48 @@ struct RAM40964Widget : ModuleWidget {
 			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 12.5)), module, RAM40964::CH_PLANE1_LIGHTS_G+2*i));
 			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 17.5)), module, RAM40964::CH_PLANE2_LIGHTS_G+2*i));
 			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 22.5)), module, RAM40964::CH_PLANE3_LIGHTS_G+2*i));
-			addChild(createLightCentered<SmallLight<YellowLight>>(mm2px(Vec(x, 27.5)), module, RAM40964::CH_WRITE_LIGHTS+i));
+			addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(x, 27.5)), module, RAM40964::CH_WRITE_LIGHTS+i));
 		}
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(102.388, 56.236)), module, RAM40964::DATA0_LIGHT));
 		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(102.388, 68.936)), module, RAM40964::DATA1_LIGHT));
 		addChild(createLightCentered<MediumLight<BlueLight>>(mm2px(Vec(102.388, 81.636)), module, RAM40964::DATA2_LIGHT));
 		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.388, 94.336)), module, RAM40964::DATA3_LIGHT));
-		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.0, 47.0)), module, RAM40964::WRITE_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(102.0, 47.0)), module, RAM40964::WRITE_LIGHT));
 
-		// mm2px(Vec(25.4, 10.16))
-		addChild(createWidget<Widget>(mm2px(Vec(15.24, 5.83))));
-		// mm2px(Vec(12.832, 10.16))
-		addChild(createWidget<Widget>(mm2px(Vec(27.808, 18.53))));
+		xdisp = createWidget<SevenSegmentDisplay>(mm2px(Vec(15.24, 5.83)));
+		xdisp->box.size = mm2px(Vec(25.4, 10.16));
+		xdisp->setColor(componentlibrary::SCHEME_YELLOW);
+		xdisp->setValue(0, 4);
+		addChild(xdisp);
+
+		ydisp = createWidget<SevenSegmentDisplay>(mm2px(Vec(27.808, 18.53)));
+		ydisp->box.size = mm2px(Vec(12.832, 10.16));
+		ydisp->setColor(componentlibrary::SCHEME_PURPLE);
+		ydisp->setValue(0, 2);
+		addChild(ydisp);
 		addChild(createLightMatrix<TinySimpleLight<TrueRGBLight>>(mm2px(Vec(3.54, 42.39)), mm2px(Vec(79.28, 79.28)), module, RAM40964::MATRIX_LIGHT_START, RAM40964::MATRIX_WIDTH, RAM40964::MATRIX_HEIGHT));
 
+	}
+
+	void step() override {
+		Widget::step();
+
+		auto m = dynamic_cast<RAM40964*>(module);
+		if (m) {
+			xdisp->setValue(m->addrX, 4);
+			ydisp->setValue(m->addrY, 2);
+			if (m->hexMode != lastHexMode) {
+				lastHexMode = m->hexMode;
+				xdisp->setHexMode(lastHexMode);
+				ydisp->setHexMode(lastHexMode);
+			}
+		} else {
+			lastHexMode = false;
+			xdisp->setHexMode(false);
+			xdisp->setValue(420, 3);
+			ydisp->setHexMode(false);
+			ydisp->setValue(69, 2);
+		}
 	}
 };
 

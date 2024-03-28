@@ -1,5 +1,7 @@
 #include "plugin.hpp"
+#include "Widgets.hpp"
 
+using namespace sparkette;
 
 struct Integrator : Module {
 	enum ParamId {
@@ -65,16 +67,16 @@ struct Integrator : Module {
 	}
 
 	void processOne(const ProcessArgs& args, ParamId min, ParamId max, ParamId deltaScale, ParamId dsr, ParamId reset_button, InputId delta, InputId gate, InputId reset, OutputId output, LightId max_light, LightId min_light, std::size_t array_index) {
-		float& value = values[array_index];
-		if (reset_triggers[array_index].process(inputs[reset].getVoltage()) || params[reset_button].getValue())
-			value = 0.f;
-
 		bool delta_connected = inputs[delta].isConnected();
 		bool gate_status = inputs[gate].isConnected() ? (inputs[gate].getVoltage() >= 1.f) : delta_connected;
 		float minval = params[min].getValue();
 		float maxval = params[max].getValue();
 		if (minval > maxval)
 			std::swap(minval, maxval);
+
+		float& value = values[array_index];
+		if (reset_triggers[array_index].process(inputs[reset].getVoltage()) || params[reset_button].getValue())
+			value = std::min(maxval, std::max(minval, 0.f));
 
 		if (gate_status) {
 			float d = args.sampleTime * params[deltaScale].getValue() * (delta_connected ? inputs[delta].getVoltage() : 1.f);
@@ -156,8 +158,8 @@ struct IntegratorWidget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(15.24, 75.321)), module, Integrator::MAX_B_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 79.321)), module, Integrator::MIN_B_LIGHT));
 
-		value_text[0] = createWidget<Label>(mm2px(Vec(0.712, 58.08)));
-		value_text[1] = createWidget<Label>(mm2px(Vec(0.712, 114.806)));
+		value_text[0] = createWidget<GlowingLabel>(mm2px(Vec(0.712, 58.08)));
+		value_text[1] = createWidget<GlowingLabel>(mm2px(Vec(0.712, 114.806)));
 		for (int i=0; i<2; ++i) {
 			value_text[i]->box.size = mm2px(Vec(18.521, 7.65));
 			value_text[i]->color = componentlibrary::SCHEME_GREEN;

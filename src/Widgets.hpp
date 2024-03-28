@@ -3,6 +3,10 @@
 
 namespace sparkette {
 
+struct GlowingLabel : Label {
+	void drawLayer(const DrawArgs& args, int layer) override;
+};
+
 class SevenSegmentDisplay : public TransparentWidget {
 
 	bool needsUpdate = false;

@@ -164,6 +164,25 @@ private:
 public:
 
 	void process(const ProcessArgs& args) override {
+		// Process phasor input/outputs
+		int phasor_nchan = inputs[PHASOR_INPUT].getChannels();
+		float phasor_voltages[PORT_MAX_CHANNELS];
+		float x_out_voltages[PORT_MAX_CHANNELS];
+		float y_out_voltages[PORT_MAX_CHANNELS];
+		inputs[PHASOR_INPUT].readVoltages(phasor_voltages);
+		outputs[X_OUTPUT].setChannels(phasor_nchan);
+		outputs[Y_OUTPUT].setChannels(phasor_nchan);
+		for (int i=0; i<phasor_nchan; ++i) {
+			if (phasor_voltages[i] >= 0.f) {
+				int phasor_address = (int)(phasor_voltages[i] / 10.f * (MATRIX_WIDTH*MATRIX_HEIGHT-1)) % (MATRIX_WIDTH*MATRIX_HEIGHT);
+				x_out_voltages[i] = 10.f * (float)(phasor_address % MATRIX_WIDTH) / (MATRIX_WIDTH-1);
+				y_out_voltages[i] = 10.f * (float)(phasor_address / MATRIX_WIDTH) / (MATRIX_HEIGHT-1);
+			}
+		}
+		outputs[X_OUTPUT].writeVoltages(x_out_voltages);
+		outputs[Y_OUTPUT].writeVoltages(y_out_voltages);
+
+		// Read address inputs
 		float xa[PORT_MAX_CHANNELS];
 		float ya[PORT_MAX_CHANNELS];
 		float xw[PORT_MAX_CHANNELS];
@@ -180,6 +199,7 @@ public:
 		int yoff = (int)params[Y_PARAM].getValue();
 		bool data_dirty = false;
 
+		// Update brightness
 		float last_brightness = brightness;
 		brightness = params[BRIGHTNESS_PARAM].getValue();
 

@@ -183,13 +183,13 @@ public:
 		float last_brightness = brightness;
 		brightness = params[BRIGHTNESS_PARAM].getValue();
 
-		// 1) Clear data on trigger
+		// Clear data on trigger
 		if (clear_trigger.process(inputs[CLEAR_INPUT].getVoltage())) {
 			clearData();
 			data_dirty = true;
 		}
 
-		// 2) Determine which addresses to read/write
+		// Determine which addresses to read/write
 		int addresses_r[PORT_MAX_CHANNELS];
 		int addresses_w[PORT_MAX_CHANNELS];
 		fillAddressArray(xoff, yoff, xa_nchan, ya_nchan, xa, ya, addresses_r);
@@ -213,7 +213,7 @@ public:
 		if (addr_count_w == 0)
 			addr_count_w = 1;
 
-		// 3) Write data
+		// Write data
 		int planes_nchan[PLANE_COUNT];
 		float to_write[PLANE_COUNT][PORT_MAX_CHANNELS];
 		planes_nchan[0] = inputs[DATA0_INPUT].getChannels();
@@ -254,7 +254,7 @@ public:
 		}
 		lights[WRITE_LIGHT].setBrightness(wrote_some ? 1.f : 0.f);
 
-		// 4) Set data monitor R/W lights
+		// Set data monitor R/W lights
 		bool write_monitor = params[MONITOR_PARAM].getValue() > 0.5f;
 		int write_light_count = std::max(write_count, addr_count_w);
 		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
@@ -272,7 +272,7 @@ public:
 			}
 		}
 
-		// 6) Get display mode and set plane lights accordingly
+		// Get display mode and set plane lights accordingly
 		int last_dispmode = dispmode;
 		dispmode = (int)params[DISPMODE_PARAM].getValue();
 		lights[DATA0_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
@@ -280,7 +280,7 @@ public:
 		lights[DATA2_LIGHT].setBrightness(dispmode ? 1.f : 0.f);
 		lights[DATA3_LIGHT].setBrightness(dispmode ? 0.f : 1.f);
 
-		// 7) Set data outputs / data monitor channel lights
+		// Set data outputs / data monitor channel lights
 		const int plane_light_starts[4] = {CH_PLANE0_LIGHTS_G, CH_PLANE1_LIGHTS_G, CH_PLANE2_LIGHTS_G, CH_PLANE3_LIGHTS_G};
 		for (int i=0; i<PLANE_COUNT; ++i) {
 			float voltages[PORT_MAX_CHANNELS];
@@ -297,7 +297,7 @@ public:
 			}
 		}
 
-		// 8) Update entire matrix display if necessary
+		// Update entire matrix display if necessary
 		if (data_dirty || brightness != last_brightness || dispmode != last_dispmode)
 			updateDataLights();
 	}

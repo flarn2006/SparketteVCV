@@ -287,8 +287,9 @@ public:
 				else
 					lights[CH_RW_LIGHTS_R+2*i].setBrightness(0.f);
 			} else {
-				lights[CH_RW_LIGHTS_G+2*i].setBrightness(i < addr_count_r ? 1.f : 0.1f);
-				lights[CH_RW_LIGHTS_R+2*i].setBrightness(0.f);
+				float b = i < addr_count_r ? 1.f : 0.1f;
+				lights[CH_RW_LIGHTS_G+2*i].setBrightness(b);
+				lights[CH_RW_LIGHTS_R+2*i].setBrightness(b);
 			}
 		}
 

@@ -25,3 +25,4 @@ extern Model* modelBusybox;
 extern Model* modelPatterns;
 extern Model* modelMagicSparkle;
 extern Model* modelRAM40964;
+extern Model* modelQuadrants;

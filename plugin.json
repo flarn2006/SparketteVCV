@@ -160,6 +160,15 @@
         "Sample and hold",
         "Sequencer"
       ]
+    },
+    {
+      "slug": "Quadrants",
+      "name": "Quadrants",
+      "description": "Splits an XY coordinate plane into four segments, switching inputs based on the active segment. Useful with RGB Matrix and RAM-40964.",
+      "tags": [
+        "Clock modulator",
+        "Switch"
+      ]
     }
   ]
 }

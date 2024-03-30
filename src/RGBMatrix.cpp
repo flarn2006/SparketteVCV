@@ -52,6 +52,7 @@ struct RGBMatrix : Module {
 	bool double_buffered = true;
 	bool frame = false;
 	bool trigger_last = false;
+	bool fade_lights = false;
 	int curX, curY;
 	int sample_counter;
 	float framebuf[SUBPIXEL_COUNT];
@@ -83,9 +84,9 @@ struct RGBMatrix : Module {
 
 	void process(const ProcessArgs& args) override {
 		bool autotrigger = !inputs[TRIG_INPUT].isConnected();
-		lights[FRAME_LIGHT_R].setBrightness(!frame ? 0.5f : 0.0f);
-		lights[FRAME_LIGHT_G].setBrightness(frame_light_pulse.process(args.sampleTime) ? 0.5f : 0.0f);
-		lights[FRAME_LIGHT_B].setBrightness(polyphonic ? 0.5f : 0.0f);
+		lights[FRAME_LIGHT_R].setBrightnessSmooth(!frame ? 0.5f : 0.0f, args.sampleTime);
+		lights[FRAME_LIGHT_G].setBrightnessSmooth(frame_light_pulse.process(args.sampleTime) ? 0.5f : 0.0f, args.sampleTime);
+		lights[FRAME_LIGHT_B].setBrightnessSmooth(polyphonic ? 0.5f : 0.0f, args.sampleTime);
 		int endX = MATRIX_WIDTH - (polyphonic ? POLY_CHANNELS : 1);
 		outputs[EOF_OUTPUT].setVoltage(curX >= endX && curY == MATRIX_HEIGHT-1 ? 10.0f : 0.0f);
 
@@ -123,6 +124,10 @@ struct RGBMatrix : Module {
 							framebuf[base+0] = r;
 							framebuf[base+1] = g;
 							framebuf[base+2] = b;
+						} else if (fade_lights) {
+							lights[LIGHTS_LEN+base+0].setBrightnessSmooth(r, args.sampleTime*PIXEL_COUNT);
+							lights[LIGHTS_LEN+base+1].setBrightnessSmooth(g, args.sampleTime*PIXEL_COUNT);
+							lights[LIGHTS_LEN+base+2].setBrightnessSmooth(b, args.sampleTime*PIXEL_COUNT);
 						} else {
 							lights[LIGHTS_LEN+base+0].setBrightness(r);
 							lights[LIGHTS_LEN+base+1].setBrightness(g);
@@ -142,7 +147,10 @@ struct RGBMatrix : Module {
 				if (++curY >= MATRIX_HEIGHT) {
 					if (double_buffered) {
 						for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
-							lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
+							if (fade_lights)
+								lights[LIGHTS_LEN + i].setBrightnessSmooth(framebuf[i], args.sampleTime*PIXEL_COUNT);
+							else
+								lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
 					}
 					frame = false;
 					outputs[X_OUTPUT].setVoltage(0.0f);
@@ -168,6 +176,7 @@ struct RGBMatrix : Module {
 		json_t* root = json_object();
 		json_object_set_new(root, "polyphonic", json_boolean(polyphonic));
 		json_object_set_new(root, "double_buffered", json_boolean(double_buffered));
+		json_object_set_new(root, "fade_lights", json_boolean(fade_lights));
 		return root;
 	}
 
@@ -244,6 +253,12 @@ struct RGBMatrixWidget : ModuleWidget {
 		item = createCheckMenuItem("Double-buffered", "",
 			[module](){ return module->double_buffered; },
 			[module](){ module->double_buffered = !module->double_buffered; }
+		);
+		menu->addChild(item);
+
+		item = createCheckMenuItem("Fade lights", "",
+			[module](){ return module->fade_lights; },
+			[module](){ module->fade_lights = !module->fade_lights; }
 		);
 		menu->addChild(item);
 	}

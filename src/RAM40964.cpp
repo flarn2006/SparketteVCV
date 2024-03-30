@@ -72,7 +72,8 @@ struct RAM40964 : Module {
 	int dispmode = 0;
 	float brightness = 0.5f;
 	dsp::SchmittTrigger clear_trigger;
-	bool hexMode = false;
+	bool fade_lights = true;
+	float fade_sampleTime = 0.f;
 
 	RAM40964() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -113,7 +114,7 @@ struct RAM40964 : Module {
 		std::memset(data, 0, sizeof(data));
 	}
 
-	void updateDataLights(int address) {
+	void updateDataLights(int address, float sampleTime) {
 		int light_base = MATRIX_LIGHT_START + 3*address;
 		int dispmode = (int)params[DISPMODE_PARAM].getValue();
 		if (dispmode > 0) {
@@ -124,18 +125,27 @@ struct RAM40964 : Module {
 				for (int i=0; i<3; ++i)
 					rgb[i] = data[address][i] / 10.f;
 			for (int i=0; i<3; ++i)
-				lights[light_base+i].setBrightness(rgb[i] * brightness);
+				if (fade_lights)
+					lights[light_base+i].setBrightnessSmooth(rgb[i] * brightness, sampleTime);
+				else
+					lights[light_base+i].setBrightness(rgb[i] * brightness);
 		} else {
 			float value = data[address][3] / 10.f;
-			lights[light_base+0].setBrightness(-value * brightness);
-			lights[light_base+1].setBrightness(value * brightness);
-			lights[light_base+2].setBrightness(0.f);
+			if (fade_lights) {
+				lights[light_base+0].setBrightnessSmooth(-value * brightness, sampleTime);
+				lights[light_base+1].setBrightnessSmooth(value * brightness, sampleTime);
+				lights[light_base+2].setBrightnessSmooth(0.f, sampleTime);
+			} else {
+				lights[light_base+0].setBrightness(-value * brightness);
+				lights[light_base+1].setBrightness(value * brightness);
+				lights[light_base+2].setBrightness(0.f);
+			}
 		}
 	}
 
-	void updateDataLights() {
+	void updateDataLights(float sampleTime) {
 		for (int i=0; i<MATRIX_WIDTH*MATRIX_HEIGHT; ++i)
-			updateDataLights(i);
+			updateDataLights(i, sampleTime);
 	}
 
 private:
@@ -267,29 +277,29 @@ public:
 						if (i < planes_nchan[j])
 							plane_lastval[j] = to_write[j][i] * params[DATA0_PARAM+j].getValue();
 						data[addresses_w[i]][j] = plane_lastval[j];
-						updateDataLights(addresses_w[i]);
+						updateDataLights(addresses_w[i], args.sampleTime);
 					}
 				}
 			}
 		}
-		lights[WRITE_LIGHT].setBrightness(wrote_some ? 1.f : 0.f);
+		lights[WRITE_LIGHT].setBrightnessSmooth(wrote_some ? 1.f : 0.f, args.sampleTime);
 
 		// Set data monitor R/W lights
 		bool write_monitor = params[MONITOR_PARAM].getValue() > 0.5f;
 		int write_light_count = std::max(write_count, addr_count_w);
 		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
 			if (write_monitor) {
-				lights[CH_RW_LIGHTS_G+2*i].setBrightness(0.f);
+				lights[CH_RW_LIGHTS_G+2*i].setBrightnessSmooth(0.f, args.sampleTime);
 				if (i < write_count && (write_gates[i] > 0.5f || write_all))
-					lights[CH_RW_LIGHTS_R+2*i].setBrightness(1.f);
+					lights[CH_RW_LIGHTS_R+2*i].setBrightnessSmooth(1.f, args.sampleTime);
 				else if (i < write_light_count)
-					lights[CH_RW_LIGHTS_R+2*i].setBrightness(0.1f);
+					lights[CH_RW_LIGHTS_R+2*i].setBrightnessSmooth(0.1f, args.sampleTime);
 				else
-					lights[CH_RW_LIGHTS_R+2*i].setBrightness(0.f);
+					lights[CH_RW_LIGHTS_R+2*i].setBrightnessSmooth(0.f, args.sampleTime);
 			} else {
 				float b = i < addr_count_r ? 1.f : 0.1f;
-				lights[CH_RW_LIGHTS_G+2*i].setBrightness(b);
-				lights[CH_RW_LIGHTS_R+2*i].setBrightness(b);
+				lights[CH_RW_LIGHTS_G+2*i].setBrightnessSmooth(b, args.sampleTime);
+				lights[CH_RW_LIGHTS_R+2*i].setBrightnessSmooth(b, args.sampleTime);
 			}
 		}
 
@@ -313,14 +323,33 @@ public:
 				int light_base = plane_light_starts[i] + 2*j;
 				const int* addr_source = write_monitor ? addresses_w : addresses_r;
 				float value = data[addr_source[j]][i] / 10;
-				lights[light_base+0].setBrightness(value);
-				lights[light_base+1].setBrightness(-value);
+				lights[light_base+0].setBrightnessSmooth(value, args.sampleTime);
+				lights[light_base+1].setBrightnessSmooth(-value, args.sampleTime);
 			}
 		}
 
 		// Update entire matrix display if necessary
-		if (data_dirty || brightness != last_brightness || dispmode != last_dispmode)
-			updateDataLights();
+		if (fade_lights) {
+			fade_sampleTime += args.sampleTime;
+			if (args.frame % 128 == 0) {
+				updateDataLights(fade_sampleTime);
+				fade_sampleTime = 0.f;
+			}
+		} else if (data_dirty || brightness != last_brightness || dispmode != last_dispmode) {
+			updateDataLights(args.sampleTime);
+		}
+	}
+
+	json_t* dataToJson() override {
+		json_t* root = json_object();
+		json_object_set_new(root, "fade_lights", json_boolean(fade_lights));
+		return root;
+	}
+
+	void dataFromJson(json_t* root) override {
+		json_t* item = json_object_get(root, "fade_lights");
+		if (item)
+			fade_lights = json_boolean_value(item);
 	}
 };
 
@@ -381,6 +410,17 @@ struct RAM40964Widget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(98.66, 47.0)), module, RAM40964::WRITE_LIGHT));
 
 		addChild(createLightMatrix<TinySimpleLight<TrueRGBLight>>(mm2px(Vec(3.54, 42.39)), mm2px(Vec(79.28, 79.28)), module, RAM40964::MATRIX_LIGHT_START, RAM40964::MATRIX_WIDTH, RAM40964::MATRIX_HEIGHT));
+	}
+
+	void appendContextMenu(Menu* menu) override {
+		auto module = dynamic_cast<RAM40964*>(this->module);
+		menu->addChild(new MenuEntry);
+		
+		auto item = createCheckMenuItem("Fade lights", "",
+			[module](){ return module->fade_lights; },
+			[module](){ module->fade_lights = !module->fade_lights; }
+		);
+		menu->addChild(item);
 	}
 };
 

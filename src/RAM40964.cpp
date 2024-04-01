@@ -153,9 +153,9 @@ private:
 		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
 			int x = xoff, y = yoff;
 			if (i < y_nchan) {
-				y += y_array[i] / 10 * (MATRIX_HEIGHT-1);
+				y += y_array[i] / 10 * MATRIX_HEIGHT;
 				if (i < x_nchan)
-					x += (int)(x_array[i] / 10 * (MATRIX_WIDTH-1));
+					x += (int)(x_array[i] / 10 * MATRIX_WIDTH);
 				addresses[i] = MATRIX_WIDTH * y + x;
 			} else if (i < x_nchan) {
 				x += (int)(x_array[i] / 10 * (MATRIX_WIDTH*MATRIX_HEIGHT-1));

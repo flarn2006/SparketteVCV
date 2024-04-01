@@ -90,9 +90,9 @@ struct HSV2RGB : Module {
 		outputs[GREEN_OUTPUT].writeVoltages(green);
 		outputs[BLUE_OUTPUT].writeVoltages(blue);
 
-		lights[PREVIEW_LIGHT_R].setBrightness(red[0]);
-		lights[PREVIEW_LIGHT_G].setBrightness(green[0]);
-		lights[PREVIEW_LIGHT_B].setBrightness(blue[0]);
+		lights[PREVIEW_LIGHT_R].setBrightnessSmooth(red[0], args.sampleTime);
+		lights[PREVIEW_LIGHT_G].setBrightnessSmooth(green[0], args.sampleTime);
+		lights[PREVIEW_LIGHT_B].setBrightnessSmooth(blue[0], args.sampleTime);
 	}
 };
 

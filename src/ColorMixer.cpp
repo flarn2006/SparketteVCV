@@ -129,7 +129,7 @@ struct ColorMixer : Module {
 		return result;
 	}
 
-	void processLayer(RGBA* poly_colors, int nchan, int layer_index, int lights_mode) {
+	void processLayer(const ProcessArgs& args, RGBA* poly_colors, int nchan, int layer_index, int lights_mode) {
 		const int input_base = LAYER_INPUTS_START + INPUTS_PER_LAYER * layer_index;
 		const int param_base = LAYER_PARAMS_START + PARAMS_PER_LAYER * layer_index;
 		const int light_base = LAYER_LIGHTS_START + LIGHTS_PER_LAYER * layer_index;
@@ -163,23 +163,23 @@ struct ColorMixer : Module {
 				hsvToRgb(red[i], green[i], blue[i], r, g, b);
 
 			if (i == 0 && lights_mode >= 1) {
-				lights[light_base+5].setBrightness(r);
-				lights[light_base+6].setBrightness(g);
-				lights[light_base+7].setBrightness(b);
+				lights[light_base+5].setBrightnessSmooth(r, args.sampleTime);
+				lights[light_base+6].setBrightnessSmooth(g, args.sampleTime);
+				lights[light_base+7].setBrightnessSmooth(b, args.sampleTime);
 			}
 
 			poly_colors[i] = composite(poly_colors[i], {r, g, b, alpha[i]}, blend_mode);
 		}
 
 		if (lights_mode >= 2) {
-			lights[light_base+8].setBrightness(alpha[0] / 2);
-			lights[light_base+9].setBrightness(poly_colors[0].r);
-			lights[light_base+10].setBrightness(poly_colors[0].g);
-			lights[light_base+11].setBrightness(poly_colors[0].b);
+			lights[light_base+8].setBrightnessSmooth(alpha[0] / 2, args.sampleTime);
+			lights[light_base+9].setBrightnessSmooth(poly_colors[0].r, args.sampleTime);
+			lights[light_base+10].setBrightnessSmooth(poly_colors[0].g, args.sampleTime);
+			lights[light_base+11].setBrightnessSmooth(poly_colors[0].b, args.sampleTime);
 		} else {
 			int start = (lights_mode == 1) ? 8 : 5;
 			for (int i=start; i<LIGHTS_PER_LAYER; ++i)
-				lights[light_base+i].setBrightness(0.f);
+				lights[light_base+i].setBrightnessSmooth(0.f, args.sampleTime);
 		}
 	}
 
@@ -228,19 +228,19 @@ struct ColorMixer : Module {
 		}
 
 		if (bgmode == 0) {
-			lights[BG_LIGHT_R].setBrightness(0.f);
-			lights[BG_LIGHT_G].setBrightness(0.f);
-			lights[BG_LIGHT_B].setBrightness(0.f);
-			lights[ALPHA_OUT_LIGHT].setBrightness(0.75f);
+			lights[BG_LIGHT_R].setBrightnessSmooth(0.f, args.sampleTime);
+			lights[BG_LIGHT_G].setBrightnessSmooth(0.f, args.sampleTime);
+			lights[BG_LIGHT_B].setBrightnessSmooth(0.f, args.sampleTime);
+			lights[ALPHA_OUT_LIGHT].setBrightnessSmooth(0.75f, args.sampleTime);
 		} else {
-			lights[BG_LIGHT_R].setBrightness(poly_colors[0].r);
-			lights[BG_LIGHT_G].setBrightness(poly_colors[0].g);
-			lights[BG_LIGHT_B].setBrightness(poly_colors[0].b);
-			lights[ALPHA_OUT_LIGHT].setBrightness(0.f);
+			lights[BG_LIGHT_R].setBrightnessSmooth(poly_colors[0].r, args.sampleTime);
+			lights[BG_LIGHT_G].setBrightnessSmooth(poly_colors[0].g, args.sampleTime);
+			lights[BG_LIGHT_B].setBrightnessSmooth(poly_colors[0].b, args.sampleTime);
+			lights[ALPHA_OUT_LIGHT].setBrightnessSmooth(0.f, args.sampleTime);
 		}
 
 		for (int i=NUM_LAYERS-1; i>=0; --i) {
-			processLayer(poly_colors, nchan, i, lights_mode);
+			processLayer(args, poly_colors, nchan, i, lights_mode);
 			if (clamp_mode >= 2 || (i == 0 && clamp_mode == 1))
 				for (int j=0; j<nchan; ++j)
 					poly_colors[j].clamp();

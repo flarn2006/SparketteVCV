@@ -22,8 +22,6 @@ extern Model* modelPolyCat;
 extern Model* modelIntegrator;
 extern Model* modelColorMixer;
 extern Model* modelBusybox;
-extern Model* modelPatterns;
-extern Model* modelMagicSparkle;
 extern Model* modelRAM40964;
 extern Model* modelQuadrants;
 extern Model* modelVoltageRange;

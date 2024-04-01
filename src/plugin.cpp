@@ -22,8 +22,6 @@ void init(Plugin* p) {
 	p->addModel(modelIntegrator);
 	p->addModel(modelColorMixer);
 	p->addModel(modelBusybox);
-	p->addModel(modelPatterns);
-	p->addModel(modelMagicSparkle);
 	p->addModel(modelRAM40964);
 	p->addModel(modelQuadrants);
 	p->addModel(modelVoltageRange);

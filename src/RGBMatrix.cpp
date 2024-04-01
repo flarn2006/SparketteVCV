@@ -111,6 +111,8 @@ struct RGBMatrix : Module {
 			outputs[YPULSE_OUTPUT].setVoltage(2*curX / MATRIX_WIDTH ? 0.0f : 10.0f);
 
 			int channels = polyphonic ? POLY_CHANNELS : 1;
+
+			float adjusted_sampleTime = args.sampleTime * sample_count * PIXEL_COUNT / channels;
 			
 			if (curX >= 0 && sample_counter < sample_count) {
 				if (++sample_counter >= sample_count) {
@@ -125,9 +127,9 @@ struct RGBMatrix : Module {
 							framebuf[base+1] = g;
 							framebuf[base+2] = b;
 						} else if (fade_lights) {
-							lights[LIGHTS_LEN+base+0].setBrightnessSmooth(r, args.sampleTime*PIXEL_COUNT);
-							lights[LIGHTS_LEN+base+1].setBrightnessSmooth(g, args.sampleTime*PIXEL_COUNT);
-							lights[LIGHTS_LEN+base+2].setBrightnessSmooth(b, args.sampleTime*PIXEL_COUNT);
+							lights[LIGHTS_LEN+base+0].setBrightnessSmooth(r, adjusted_sampleTime);
+							lights[LIGHTS_LEN+base+1].setBrightnessSmooth(g, adjusted_sampleTime);
+							lights[LIGHTS_LEN+base+2].setBrightnessSmooth(b, adjusted_sampleTime);
 						} else {
 							lights[LIGHTS_LEN+base+0].setBrightness(r);
 							lights[LIGHTS_LEN+base+1].setBrightness(g);
@@ -148,7 +150,7 @@ struct RGBMatrix : Module {
 					if (double_buffered) {
 						for (std::size_t i=0; i<SUBPIXEL_COUNT; ++i)
 							if (fade_lights)
-								lights[LIGHTS_LEN + i].setBrightnessSmooth(framebuf[i], args.sampleTime*PIXEL_COUNT);
+								lights[LIGHTS_LEN + i].setBrightnessSmooth(framebuf[i], adjusted_sampleTime);
 							else
 								lights[LIGHTS_LEN + i].setBrightness(framebuf[i]);
 					}

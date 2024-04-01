@@ -70,7 +70,7 @@ struct Busybox : Module {
 		void process(const ProcessArgs& args) {
 			phase = std::fmod(phase + dsp::approxExp2_taylor5(freq->getValue()) * args.sampleTime, 1.f);
 			float y = wave(phase);
-			light->setBrightness(y);
+			light->setBrightnessSmooth(y, args.sampleTime);
 			out->setVoltage(y * 10);
 			out2->setVoltage(10.f - y * 10);
 		}
@@ -200,7 +200,7 @@ struct Busybox : Module {
 			for (int i=0; i<vca_nchan; ++i)
 				vca[i] *= envelope[(nchan == 1) ? 0 : i] / 10.f;
 
-			light->setBrightness(envelope[0] / 10);
+			light->setBrightnessSmooth(envelope[0] / 10, args.sampleTime);
 			env_out->setChannels(nchan);
 			env_out->writeVoltages(envelope);
 			if (vca_nchan > 0) {

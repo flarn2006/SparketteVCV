@@ -18,7 +18,7 @@ struct RAM40964 : Module {
 		DATA1_PARAM,
 		DATA2_PARAM,
 		DATA3_PARAM,
-		CURSOR_PARAM,
+		INCREMENT_PARAM,
 		MONITOR_PARAM,
 		DISPMODE_PARAM,
 		BRIGHTNESS_PARAM,
@@ -83,7 +83,7 @@ struct RAM40964 : Module {
 		configParam(DATA1_PARAM, 0.f, 1.f, 1.f, "Plane 1 value");
 		configParam(DATA2_PARAM, 0.f, 1.f, 1.f, "Plane 2 value");
 		configParam(DATA3_PARAM, 0.f, 1.f, 1.f, "Plane 3 value");
-		configSwitch(CURSOR_PARAM, 0.f, 1.f, 0.f, "Value highlight", {"Off", "On"});
+		configSwitch(INCREMENT_PARAM, 0.f, 2.f, 1.f, "Poly-data address increment", {"Off", "Next cell", "Next row"});
 		configSwitch(DISPMODE_PARAM, 0.f, 2.f, 0.f, "Display mode", {"Plane 3", "Planes 0-2 (RGB)", "Planes 0-2 (HSV)"});
 		configParam(BRIGHTNESS_PARAM, 0.f, 1.f, 0.5f, "Brightness", "%", 0.f, 100.f);
 		configSwitch(WRITE_PARAM, 0.f, 1.f, 0.f, "Write", {"when gate active", "always"});
@@ -149,7 +149,7 @@ struct RAM40964 : Module {
 	}
 
 private:
-	void fillAddressArray(int xoff, int yoff, int x_nchan, int y_nchan, const float* x_array, const float* y_array, int* addresses) const {
+	void fillAddressArray(int xoff, int yoff, int x_nchan, int y_nchan, const float* x_array, const float* y_array, int* addresses, int poly_increment) const {
 		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
 			int x = xoff, y = yoff;
 			if (i < y_nchan) {
@@ -161,7 +161,7 @@ private:
 				x += (int)(x_array[i] / 10 * (MATRIX_WIDTH*MATRIX_HEIGHT-1));
 				addresses[i] = MATRIX_WIDTH * y + x;
 			} else if (i > 0) {
-				addresses[i] = (addresses[i-1] + 1) % (MATRIX_WIDTH*MATRIX_HEIGHT);
+				addresses[i] = (addresses[i-1] + poly_increment) % (MATRIX_WIDTH*MATRIX_HEIGHT);
 			} else {
 				addresses[i] = MATRIX_WIDTH * y + x;
 			}
@@ -209,6 +209,10 @@ public:
 		int yoff = (int)params[Y_PARAM].getValue();
 		bool data_dirty = false;
 
+		int poly_increment = (int)params[INCREMENT_PARAM].getValue();
+		if (poly_increment == 2)
+			poly_increment = MATRIX_WIDTH;
+
 		// Update brightness
 		float last_brightness = brightness;
 		brightness = params[BRIGHTNESS_PARAM].getValue();
@@ -222,13 +226,13 @@ public:
 		// Determine which addresses to read/write
 		int addresses_r[PORT_MAX_CHANNELS];
 		int addresses_w[PORT_MAX_CHANNELS];
-		fillAddressArray(xoff, yoff, xa_nchan, ya_nchan, xa, ya, addresses_r);
+		fillAddressArray(xoff, yoff, xa_nchan, ya_nchan, xa, ya, addresses_r, poly_increment);
 		if (xw_nchan == 0 && yw_nchan == 0 && (xa_nchan > 0 || ya_nchan > 0)) {
 			std::memcpy(addresses_w, addresses_r, sizeof(addresses_r));
 			xw_nchan = xa_nchan;
 			yw_nchan = ya_nchan;
 		} else {
-			fillAddressArray(xoff, yoff, xw_nchan, yw_nchan, xw, yw, addresses_w);
+			fillAddressArray(xoff, yoff, xw_nchan, yw_nchan, xw, yw, addresses_w, poly_increment);
 			if (xa_nchan == 0 && ya_nchan == 0 && (xw_nchan > 0 || yw_nchan > 0)) {
 				std::memcpy(addresses_r, addresses_w, sizeof(addresses_w));
 				xa_nchan = xw_nchan;
@@ -259,8 +263,11 @@ public:
 		bool write_all = params[WRITE_PARAM].getValue() > 0.5f;
 		//if (!write_all && write_count == 1 && inputs[WRITE_INPUT].getVoltage() > 0.5f)
 			//write_all = true;
-		if (write_all)
+		if (write_all) {
 			write_count = std::max(write_count, addr_count_w);
+			for (int i=0; i<4; ++i)
+				write_count = std::max(write_count, planes_nchan[i]);
+		}
 		bool wrote_some = write_all;
 
 		float write_gates[PORT_MAX_CHANNELS];
@@ -370,8 +377,8 @@ struct RAM40964Widget : ModuleWidget {
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 73.516)), module, RAM40964::DATA1_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 86.216)), module, RAM40964::DATA2_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 98.916)), module, RAM40964::DATA3_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(100.538, 110.076)), module, RAM40964::CURSOR_PARAM));
-		addParam(createParamCentered<CKSSThree>(mm2px(Vec(106.008, 110.076)), module, RAM40964::DISPMODE_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(100.538, 109.576)), module, RAM40964::INCREMENT_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(106.008, 109.576)), module, RAM40964::DISPMODE_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(88.9, 107.43)), module, RAM40964::BRIGHTNESS_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(98.66, 40.332)), module, RAM40964::WRITE_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(63.5, 11.786)), module, RAM40964::MONITOR_PARAM));

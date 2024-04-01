@@ -61,6 +61,8 @@ struct Busybox : Module {
 		Light* light;
 		Output *out, *out2;
 		float phase = 0.f;
+		float freq_value = 4.f;
+		float freq_knob_value = 2.f;
 
 		static constexpr float FREQ_DISPLAY_BASE = 2.f;
 
@@ -68,7 +70,11 @@ struct Busybox : Module {
 		virtual float wave(float t) const = 0;
 
 		void process(const ProcessArgs& args) {
-			phase = std::fmod(phase + dsp::approxExp2_taylor5(freq->getValue()) * args.sampleTime, 1.f);
+			float prev_knob = freq_knob_value;
+			freq_knob_value = freq->getValue();
+			if (freq_knob_value != prev_knob)
+				freq_value = dsp::approxExp2_taylor5(freq_knob_value);
+			phase = std::fmod(phase + freq_value * args.sampleTime, 1.f);
 			float y = wave(phase);
 			light->setBrightnessSmooth(y, args.sampleTime);
 			out->setVoltage(y * 10);
@@ -125,6 +131,8 @@ struct Busybox : Module {
 			float gates[PORT_MAX_CHANNELS];
 			float vca[PORT_MAX_CHANNELS];
 			int nchan = gate->getChannels();
+			if (nchan == 0)
+				return;
 			gate->readVoltages(gates);
 			vca_in->readVoltages(vca);
 

@@ -26,6 +26,7 @@ void init(Plugin* p) {
 	p->addModel(modelMagicSparkle);
 	p->addModel(modelRAM40964);
 	p->addModel(modelQuadrants);
+	p->addModel(modelVoltageRange);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.

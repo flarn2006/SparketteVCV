@@ -169,6 +169,15 @@
         "Clock modulator",
         "Switch"
       ]
+    },
+    {
+      "slug": "VoltageRange",
+      "name": "Voltage Range",
+      "description": "Generates a smooth range of values between and including two specified voltages on a polyphonic output.",
+      "tags": [
+        "Utility",
+        "Polyphonic"
+      ]
     }
   ]
 }

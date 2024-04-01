@@ -26,3 +26,4 @@ extern Model* modelPatterns;
 extern Model* modelMagicSparkle;
 extern Model* modelRAM40964;
 extern Model* modelQuadrants;
+extern Model* modelVoltageRange;

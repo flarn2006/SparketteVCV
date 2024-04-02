@@ -9,6 +9,7 @@ struct Microcosm : Module {
 	static constexpr int CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
 
 	enum ParamId {
+		CLOCK_ENABLE_PARAM,
 		SAVE_PARAM,
 		RESTORE_PARAM,
 		RANDOM_PARAM,
@@ -40,6 +41,7 @@ struct Microcosm : Module {
 
 	Microcosm() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+		configSwitch(CLOCK_ENABLE_PARAM, 0.f, 1.f, 1.f, "Clock", {"Disabled", "Enabled"});
 		configParam(SAVE_PARAM, 0.f, 1.f, 0.f, "Save");
 		configParam(RESTORE_PARAM, 0.f, 1.f, 0.f, "Restore");
 		configParam(RANDOM_PARAM, 0.f, 1.f, 0.f, "Randomize");
@@ -58,9 +60,18 @@ struct Microcosm : Module {
 			configInput(CELL_INPUTS_START+i, string::f("Cell %s toggle", cellname));
 			configOutput(CELL_OUTPUTS_START+i, string::f("Cell %s", cellname));
 		}
+		initSaved();
+	}
+
+	void initSaved() {
+		saved.reset();
 		saved.set(11); saved.set(12); saved.set(13);
 		saved.set(16);
 		               saved.set(22);
+	}
+
+	void onReset(const ResetEvent& e) override {
+		initSaved();
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -80,7 +91,7 @@ struct Microcosm : Module {
 		if (t_clear.process(inputs[CLEAR_INPUT].getVoltage() + params[CLEAR_PARAM].getValue()))
 			field.reset();
 
-		bool clock = t_clock.process(inputs[CLOCK_INPUT].getVoltage());
+		bool clock = t_clock.process(inputs[CLOCK_INPUT].getVoltage()) && params[CLOCK_ENABLE_PARAM].getValue() > 0.5f;
 
 		for (int i=0; i<CELL_COUNT; ++i) {
 			if (t_cell_toggle[i].process(inputs[CELL_INPUTS_START+i].getVoltage() + params[CELL_BUTTONS_START+i].getValue()))
@@ -148,6 +159,7 @@ struct MicrocosmWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
+		addParam(createParamCentered<CKSS>(mm2px(Vec(15.39, 113.568)), module, Microcosm::CLOCK_ENABLE_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(29.845, 113.568)), module, Microcosm::SAVE_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(46.567, 113.568)), module, Microcosm::RESTORE_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(63.288, 113.568)), module, Microcosm::RANDOM_PARAM));

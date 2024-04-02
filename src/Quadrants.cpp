@@ -84,6 +84,7 @@ struct Quadrants : Module {
 	void process(const ProcessArgs& args) override {
 		int qc_nchan[4][4];
 		float qc_voltages[5][4][PORT_MAX_CHANNELS];
+		std::memset(qc_voltages, 0, sizeof(qc_voltages));
 		for (int i=0; i<16; ++i) {
 			qc_nchan[i/4][i%4] = std::max(1, inputs[A1_INPUT+i].getChannels());
 			inputs[A1_INPUT+i].readVoltages(qc_voltages[i/4][i%4]);

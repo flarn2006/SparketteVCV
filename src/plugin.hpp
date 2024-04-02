@@ -25,3 +25,4 @@ extern Model* modelBusybox;
 extern Model* modelRAM40964;
 extern Model* modelQuadrants;
 extern Model* modelVoltageRange;
+extern Model* modelMicrocosm;

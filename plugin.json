@@ -163,6 +163,15 @@
         "Utility",
         "Polyphonic"
       ]
+    },
+    {
+      "slug": "Microcosm",
+      "name": "Microcosm",
+      "description": "5x5 Conway's Game of Life where each cell is individually controllable.",
+      "tags": [
+        "Digital",
+        "Sequencer"
+      ]
     }
   ]
 }

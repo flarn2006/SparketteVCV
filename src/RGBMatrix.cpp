@@ -190,6 +190,9 @@ struct RGBMatrix : Module {
 		item = json_object_get(root, "double_buffered");
 		if (item)
 			double_buffered = json_boolean_value(item);
+		item = json_object_get(root, "fade_lights");
+		if (item)
+			fade_lights = json_boolean_value(item);
 	}
 };
 

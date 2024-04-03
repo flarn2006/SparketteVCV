@@ -20,6 +20,7 @@ extern Model* modelHSV2RGB;
 extern Model* modelFunctions;
 extern Model* modelPolyCat;
 extern Model* modelIntegrator;
+extern Model* modelIntegratorEx;
 extern Model* modelColorMixer;
 extern Model* modelBusybox;
 extern Model* modelRAM40964;

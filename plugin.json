@@ -172,6 +172,17 @@
         "Digital",
         "Sequencer"
       ]
+    },
+    {
+      "slug": "IntegratorEx",
+      "name": "Integrator Expander",
+      "description": "Expander for Integrator that adds outputs for indicating boundary events.",
+      "tags": [
+        "Dual",
+        "Dynamics",
+        "Expander",
+        "Function generator"
+      ]
     }
   ]
 }

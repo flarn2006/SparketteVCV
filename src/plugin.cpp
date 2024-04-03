@@ -20,6 +20,7 @@ void init(Plugin* p) {
 	p->addModel(modelFunctions);
 	p->addModel(modelPolyCat);
 	p->addModel(modelIntegrator);
+	p->addModel(modelIntegratorEx);
 	p->addModel(modelColorMixer);
 	p->addModel(modelBusybox);
 	p->addModel(modelRAM40964);

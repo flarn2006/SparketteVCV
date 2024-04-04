@@ -180,11 +180,7 @@ struct IntegratorWidget : ModuleWidget {
 	void appendContextMenu(Menu* menu) override {
 		if (module == nullptr) return;
 		auto m = dynamic_cast<Integrator*>(module);
-		auto item = createCheckMenuItem("Wraparound", "",
-			[m](){ return m->wraparound; },
-			[m](){ m->wraparound = !m->wraparound; }
-		);
-		menu->addChild(item);
+		menu->addChild(createBoolPtrMenuItem("Wraparound", "", &m->wraparound));
 	}
 };
 

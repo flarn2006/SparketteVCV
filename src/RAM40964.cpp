@@ -423,17 +423,13 @@ struct RAM40964Widget : ModuleWidget {
 		auto module = dynamic_cast<RAM40964*>(this->module);
 		menu->addChild(new MenuEntry);
 
-		auto item = createMenuItem("Clear Memory", "", [module]() {
+		auto item = createMenuItem("Clear memory", "", [module]() {
 			module->clearData();
 			module->updateDataLights(0.f);
 		});
 		menu->addChild(item);
-		
-		item = createCheckMenuItem("Fade lights", "",
-			[module](){ return module->fade_lights; },
-			[module](){ module->fade_lights = !module->fade_lights; }
-		);
-		menu->addChild(item);
+
+		menu->addChild(createBoolPtrMenuItem("Fade lights", "", &module->fade_lights));
 	}
 };
 

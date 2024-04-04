@@ -248,24 +248,9 @@ struct RGBMatrixWidget : ModuleWidget {
 	void appendContextMenu(Menu* menu) override {
 		ModuleType* module = dynamic_cast<ModuleType*>(this->module);
 		menu->addChild(new MenuEntry);
-
-		auto item = createCheckMenuItem("Polyphonic mode", "",
-			[module](){ return module->polyphonic; },
-			[module](){ module->polyphonic = !module->polyphonic; }
-		);
-		menu->addChild(item);
-
-		item = createCheckMenuItem("Double-buffered", "",
-			[module](){ return module->double_buffered; },
-			[module](){ module->double_buffered = !module->double_buffered; }
-		);
-		menu->addChild(item);
-
-		item = createCheckMenuItem("Fade lights", "",
-			[module](){ return module->fade_lights; },
-			[module](){ module->fade_lights = !module->fade_lights; }
-		);
-		menu->addChild(item);
+		menu->addChild(createBoolPtrMenuItem("Polyphonic mode", "", &module->polyphonic));
+		menu->addChild(createBoolPtrMenuItem("Double-buffered", "", &module->double_buffered));
+		menu->addChild(createBoolPtrMenuItem("Fade lights", "", &module->fade_lights));
 	}
 };
 

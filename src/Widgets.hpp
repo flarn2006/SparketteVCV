@@ -3,8 +3,11 @@
 
 namespace sparkette {
 
-struct GlowingLabel : Label {
-	void drawLayer(const DrawArgs& args, int layer) override;
+template <typename TWidget>
+struct GlowingWidget : TWidget {
+	void drawLayer(const typename TWidget::DrawArgs& args, int layer) override {
+		static_cast<TWidget*>(this)->draw(args);
+	}
 };
 
 class SevenSegmentDisplay : public TransparentWidget {

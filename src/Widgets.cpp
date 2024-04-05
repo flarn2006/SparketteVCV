@@ -2,10 +2,6 @@
 
 namespace sparkette {
 
-void GlowingLabel::drawLayer(const DrawArgs& args, int layer) {
-	draw(args);
-}
-
 SevenSegmentDisplay::SevenSegmentDisplay() {
 	font = APP->window->loadFont(asset::plugin(pluginInstance, "res/DSEG7ClassicMini-BoldItalic.ttf"));
 }

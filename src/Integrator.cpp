@@ -158,8 +158,8 @@ struct IntegratorWidget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(15.24, 75.321)), module, Integrator::MAX_B_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 79.321)), module, Integrator::MIN_B_LIGHT));
 
-		value_text[0] = createWidget<GlowingLabel>(mm2px(Vec(0.712, 58.08)));
-		value_text[1] = createWidget<GlowingLabel>(mm2px(Vec(0.712, 114.806)));
+		value_text[0] = createWidget<GlowingWidget<Label>>(mm2px(Vec(0.712, 58.08)));
+		value_text[1] = createWidget<GlowingWidget<Label>>(mm2px(Vec(0.712, 114.806)));
 		for (int i=0; i<2; ++i) {
 			value_text[i]->box.size = mm2px(Vec(18.521, 7.65));
 			value_text[i]->color = componentlibrary::SCHEME_GREEN;

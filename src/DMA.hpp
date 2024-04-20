@@ -45,6 +45,10 @@ namespace sparkette {
 			write(columns * row + col, value);
 		}
 
+		std::size_t size() const {
+			return count;
+		}
+
 		accessor operator[](std::size_t index) {
 			accessor acc;
 			acc.channel = this;

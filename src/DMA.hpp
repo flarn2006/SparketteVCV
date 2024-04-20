@@ -33,8 +33,16 @@ namespace sparkette {
 			return mem_start[index * stride];
 		}
 
+		T read(std::size_t col, std::size_t row) const {
+			return read(columns * row + col);
+		}
+
 		virtual void write(std::size_t index, T value) {
 			mem_start[index * stride] = value;
+		}
+
+		void write(std::size_t col, std::size_t row, T value) {
+			write(columns * row + col, value);
 		}
 
 		accessor operator[](std::size_t index) {

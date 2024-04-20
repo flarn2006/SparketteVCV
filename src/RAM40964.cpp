@@ -2,11 +2,12 @@
 #include "Lights.hpp"
 #include "Knobs.hpp"
 #include "Utility.hpp"
+#include "DMA.hpp"
 #include <cstring>
 
 using namespace sparkette;
 
-struct RAM40964 : Module {
+struct RAM40964 : Module, DMAHost<float> {
 	static constexpr int MATRIX_WIDTH = 64;
 	static constexpr int MATRIX_HEIGHT = 64;
 	static constexpr int PLANE_COUNT = 4;
@@ -68,12 +69,24 @@ struct RAM40964 : Module {
 		LIGHTS_LEN = MATRIX_LIGHT_START + 3*MATRIX_WIDTH*MATRIX_HEIGHT
 	};
 
+	struct DMA : DMAChannel<float> {
+		friend class RAM40964;
+		RAM40964 *module = nullptr;
+		void write(std::size_t index, float value) override {
+			DMAChannel<float>::write(index, value);
+			if (module)
+				module->data_dirty = true;
+		}
+	};
+
 	float data[MATRIX_WIDTH*MATRIX_HEIGHT][PLANE_COUNT];
 	int dispmode = 0;
 	float brightness = 0.5f;
 	dsp::SchmittTrigger clear_trigger;
 	bool fade_lights = true;
 	float fade_sampleTime = 0.f;
+	bool data_dirty = false;
+	DMA dma[PLANE_COUNT];
 
 	RAM40964() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -108,6 +121,14 @@ struct RAM40964 : Module {
 		paramQuantities[X_PARAM]->snapEnabled = true;
 		paramQuantities[Y_PARAM]->snapEnabled = true;
 		clearData();
+
+		for (int i=0; i<PLANE_COUNT; ++i) {
+			dma[i].mem_start = &data[0][i];
+			dma[i].count = MATRIX_WIDTH*MATRIX_HEIGHT;
+			dma[i].stride = PLANE_COUNT;
+			dma[i].columns = MATRIX_WIDTH;
+			dma[i].module = this;
+		}
 	}
 
 	void clearData() {
@@ -146,6 +167,7 @@ struct RAM40964 : Module {
 	void updateDataLights(float sampleTime) {
 		for (int i=0; i<MATRIX_WIDTH*MATRIX_HEIGHT; ++i)
 			updateDataLights(i, sampleTime);
+		data_dirty = false;
 	}
 
 private:
@@ -207,7 +229,6 @@ public:
 		int yw_nchan = inputs[YW_INPUT].getChannels();
 		int xoff = (int)params[X_PARAM].getValue();
 		int yoff = (int)params[Y_PARAM].getValue();
-		bool data_dirty = false;
 
 		int poly_increment = (int)params[INCREMENT_PARAM].getValue();
 		if (poly_increment == 2)
@@ -357,6 +378,14 @@ public:
 		json_t* item = json_object_get(root, "fade_lights");
 		if (item)
 			fade_lights = json_boolean_value(item);
+	}
+
+	int getDMAChannelCount() const override {
+		return PLANE_COUNT;
+	}
+
+	DMAChannel<float> *getDMAChannel(int num) override {
+		return &dma[num];
 	}
 };
 

@@ -13,6 +13,7 @@ namespace sparkette {
 
 	public:
 		class accessor {
+			friend class DMAChannel<T>;
 			DMAChannel *channel;
 			std::size_t index;
 		public:
@@ -127,7 +128,7 @@ namespace sparkette {
 				if (dmaClientLightID >= 0)
 					lights[dmaClientLightID].setBrightness(dynamic_cast<DMAClient<T>*>(leftExpander.module) ? 1.f : 0.f);
 			} else {
-				setDMAHost(dynamic_cast<DMAHost<T>*>(rightExpander.module));
+				this->setDMAHost(dynamic_cast<DMAHost<T>*>(rightExpander.module));
 			}
 		}
 

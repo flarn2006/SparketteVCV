@@ -104,6 +104,27 @@ namespace sparkette {
 				return false;
 		}
 	};
+
+	template <typename T>
+	struct DMAExpanderModule : Module, DMAClient<T> {
+		int dmaHostLightID = -1; //intended to be a GreenRedLight, so dmaHostLightID+1 will be used as well
+		int dmaClientLightID = -1;
+
+		virtual void onExpanderChange(const ExpanderChangeEvent &e) override {
+			if (e.side == 0) {
+				if (dmaClientLightID >= 0)
+					lights[dmaClientLightID].setBrightness(dynamic_cast<DMAClient<T>*>(leftExpander.module) ? 1.f : 0.f);
+			} else {
+				setDMAHost(dynamic_cast<DMAHost<T>*>(rightExpander.module));
+			}
+		}
+
+		virtual void process(const ProcessArgs &args) override {
+			if (dmaHostLightID >= 0) {
+				bool ready = this->readyForDMA();
+				lights[dmaHostLightID].setBrightnessSmooth(ready ? 1.f : 0.f, args.sampleTime);
+				lights[dmaHostLightID+1].setBrightnessSmooth(ready ? 0.f : 1.f, args.sampleTime);
+			}
 		}
 	};
 }

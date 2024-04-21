@@ -1,9 +1,11 @@
 #include "plugin.hpp"
+#include "DMA.hpp"
 #include <bitset>
 #include <cstdlib>
 
+using namespace sparkette;
 
-struct Microcosm : Module {
+struct Microcosm : Module, DMAHost<bool> {
 	static constexpr int GRID_WIDTH = 5;
 	static constexpr int GRID_HEIGHT = 5;
 	static constexpr int CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
@@ -39,7 +41,25 @@ struct Microcosm : Module {
 	dsp::SchmittTrigger t_cell_toggle[CELL_COUNT];
 	std::bitset<CELL_COUNT> field, saved;
 
-	Microcosm() {
+	struct DMA : DMAChannel<bool> {
+		std::bitset<CELL_COUNT> &bitset;
+		DMA(std::bitset<CELL_COUNT> &bitset) : bitset(bitset) {
+			columns = GRID_WIDTH;
+			count = CELL_COUNT;
+		}
+
+		bool read(std::size_t index) const override {
+			return bitset[index];
+		}
+
+		void write(std::size_t index, bool value) override {
+			bitset[index] = value;
+		}
+	};
+
+	DMA fieldDMA, savedDMA;
+
+	Microcosm() : fieldDMA(field), savedDMA(saved) {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configSwitch(CLOCK_ENABLE_PARAM, 0.f, 1.f, 1.f, "Clock", {"Disabled", "Enabled"});
 		configParam(SAVE_PARAM, 0.f, 1.f, 0.f, "Save");
@@ -139,6 +159,18 @@ struct Microcosm : Module {
 			for (int i=0; i<CELL_COUNT; ++i) {
 				saved[i] = json_boolean_value(json_array_get(item, i));
 			}
+		}
+	}
+
+	int getDMAChannelCount() const override {
+		return 2;
+	}
+
+	DMAChannel<bool> *getDMAChannel(int num) override {
+		switch (num) {
+			case 0: return &fieldDMA;
+			case 1: return &savedDMA;
+			default: return nullptr;
 		}
 	}
 };

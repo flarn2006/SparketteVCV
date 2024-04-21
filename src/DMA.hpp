@@ -166,9 +166,8 @@ namespace sparkette {
 					return true;
 			} else if constexpr (sizeof...(TRest) > 0) {
 				return checkHostReady<TRest...>(hostFound);
-			} else {
-				return false;
 			}
+			return false;
 		}
 
 	protected:
@@ -187,7 +186,7 @@ namespace sparkette {
 
 		virtual void process(const ProcessArgs &args) override {
 			if (dmaHostLightID >= 0) {
-				bool hostFound;
+				bool hostFound = false;
 				bool ready = checkHostReady<T...>(hostFound);
 				if (hostFound) {
 					lights[dmaHostLightID].setBrightnessSmooth(ready ? 1.f : 0.f, args.sampleTime);

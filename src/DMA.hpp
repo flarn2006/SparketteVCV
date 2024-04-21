@@ -118,24 +118,57 @@ namespace sparkette {
 		}
 	};
 
-	template <typename T>
-	struct DMAExpanderModule : Module, DMAClient<T> {
+	template <typename... T>
+	class DMAExpanderModule : public Module, public DMAClient<T>... {
+		template <typename TFirst, typename... TRest>
+		void setDMAHosts(Module *module) {
+			DMAClient<TFirst>::setDMAHost(dynamic_cast<DMAHost<TFirst>*>(module));
+			if constexpr (sizeof...(TRest) > 0)
+				setDMAHosts<TRest...>(module);
+		}
+
+		template <typename TFirst, typename... TRest>
+		static inline bool checkForDMAClient(Module *module) {
+			bool result = dynamic_cast<DMAClient<TFirst>*>(module) != nullptr;
+			if constexpr (sizeof...(TRest) > 0)
+				return result || checkForDMAClient<TRest...>(module);
+			else
+				return result;
+		}
+
+		template <typename TFirst, typename... TRest>
+		bool checkHostReady(bool &hostFound) {
+			DMAHost<TFirst> *host = DMAClient<TFirst>::getDMAHost();
+			if (host) {
+				hostFound = true;
+				if (host->readyForDMA())
+					return true;
+			} else if constexpr (sizeof...(TRest) > 0) {
+				return checkHostReady<TRest...>(hostFound);
+			} else {
+				return false;
+			}
+		}
+
+	protected:
 		int dmaHostLightID = -1; //intended to be a GreenRedLight, so dmaHostLightID+1 will be used as well
 		int dmaClientLightID = -1;
-
+		
+	public:
 		virtual void onExpanderChange(const ExpanderChangeEvent &e) override {
 			if (e.side == 0) {
 				if (dmaClientLightID >= 0)
-					lights[dmaClientLightID].setBrightness(dynamic_cast<DMAClient<T>*>(leftExpander.module) ? 1.f : 0.f);
+					lights[dmaClientLightID].setBrightness(checkForDMAClient<T...>(leftExpander.module) ? 1.f : 0.f);
 			} else {
-				this->setDMAHost(dynamic_cast<DMAHost<T>*>(rightExpander.module));
+				setDMAHosts<T...>(rightExpander.module);
 			}
 		}
 
 		virtual void process(const ProcessArgs &args) override {
 			if (dmaHostLightID >= 0) {
-				if (this->getDMAHost()) {
-					bool ready = this->readyForDMA();
+				bool hostFound;
+				bool ready = checkHostReady<T...>(hostFound);
+				if (hostFound) {
 					lights[dmaHostLightID].setBrightnessSmooth(ready ? 1.f : 0.f, args.sampleTime);
 					lights[dmaHostLightID+1].setBrightnessSmooth(ready ? 0.f : 1.f, args.sampleTime);
 				} else {

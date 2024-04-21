@@ -66,7 +66,9 @@ struct RAM40964 : Module, DMAHost<float> {
 		CH_RW_LIGHTS_G = CH_PLANE3_LIGHTS_G + 2*PORT_MAX_CHANNELS,
 		CH_RW_LIGHTS_R,
 		MATRIX_LIGHT_START = CH_RW_LIGHTS_G + 2*PORT_MAX_CHANNELS,
-		LIGHTS_LEN = MATRIX_LIGHT_START + 3*MATRIX_WIDTH*MATRIX_HEIGHT
+		DMA_LIGHT_G = MATRIX_LIGHT_START + 3*MATRIX_WIDTH*MATRIX_HEIGHT,
+		DMA_LIGHT_R,
+		LIGHTS_LEN
 	};
 
 	struct DMA : DMAChannel<float> {
@@ -74,8 +76,10 @@ struct RAM40964 : Module, DMAHost<float> {
 		RAM40964 *module = nullptr;
 		void write(std::size_t index, float value) override {
 			DMAChannel<float>::write(index, value);
-			if (module)
+			if (module) {
 				module->data_dirty = true;
+				module->dma_write_led_pulse.trigger();
+			}
 		}
 	};
 
@@ -87,6 +91,7 @@ struct RAM40964 : Module, DMAHost<float> {
 	float fade_sampleTime = 0.f;
 	bool data_dirty = false;
 	DMA dma[PLANE_COUNT];
+	dsp::PulseGenerator dma_write_led_pulse;
 
 	RAM40964() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -366,6 +371,8 @@ public:
 		} else if (data_dirty || brightness != last_brightness || dispmode != last_dispmode) {
 			updateDataLights(args.sampleTime);
 		}
+
+		lights[DMA_LIGHT_R].setBrightness(dma_write_led_pulse.process(args.sampleTime) ? 1.f : 0.f);
 	}
 
 	json_t* dataToJson() override {
@@ -378,6 +385,11 @@ public:
 		json_t* item = json_object_get(root, "fade_lights");
 		if (item)
 			fade_lights = json_boolean_value(item);
+	}
+
+	void onExpanderChange(const ExpanderChangeEvent& e) override {
+		if (e.side == 0)
+			lights[DMA_LIGHT_G].setBrightness(dynamic_cast<DMAClient<float>*>(leftExpander.module) ? 1.f : 0.f);
 	}
 
 	int getDMAChannelCount() const override {
@@ -444,6 +456,7 @@ struct RAM40964Widget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<BlueLight>>(mm2px(Vec(102.388, 81.636)), module, RAM40964::DATA2_LIGHT));
 		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.388, 94.336)), module, RAM40964::DATA3_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(98.66, 47.0)), module, RAM40964::WRITE_LIGHT));
+		addChild(createLightCentered<SmallLight<GreenRedLight>>(Vec(8.0, 8.0), module, RAM40964::DMA_LIGHT_G));
 
 		addChild(createLightMatrix<TinySimpleLight<TrueRGBLight>>(mm2px(Vec(3.54, 42.39)), mm2px(Vec(79.28, 79.28)), module, RAM40964::MATRIX_LIGHT_START, RAM40964::MATRIX_WIDTH, RAM40964::MATRIX_HEIGHT));
 	}

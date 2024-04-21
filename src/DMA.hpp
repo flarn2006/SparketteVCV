@@ -134,9 +134,14 @@ namespace sparkette {
 
 		virtual void process(const ProcessArgs &args) override {
 			if (dmaHostLightID >= 0) {
-				bool ready = this->readyForDMA();
-				lights[dmaHostLightID].setBrightnessSmooth(ready ? 1.f : 0.f, args.sampleTime);
-				lights[dmaHostLightID+1].setBrightnessSmooth(ready ? 0.f : 1.f, args.sampleTime);
+				if (this->getDMAHost()) {
+					bool ready = this->readyForDMA();
+					lights[dmaHostLightID].setBrightnessSmooth(ready ? 1.f : 0.f, args.sampleTime);
+					lights[dmaHostLightID+1].setBrightnessSmooth(ready ? 0.f : 1.f, args.sampleTime);
+				} else {
+					lights[dmaHostLightID].setBrightnessSmooth(0.f, args.sampleTime);
+					lights[dmaHostLightID+1].setBrightnessSmooth(0.f, args.sampleTime);
+				}
 			}
 		}
 	};

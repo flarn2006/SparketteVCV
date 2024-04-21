@@ -5,7 +5,7 @@
 
 using namespace sparkette;
 
-struct Microcosm : Module, DMAHost<bool> {
+struct Microcosm : DMAHostModule<bool> {
 	static constexpr int GRID_WIDTH = 5;
 	static constexpr int GRID_HEIGHT = 5;
 	static constexpr int CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
@@ -33,6 +33,7 @@ struct Microcosm : Module, DMAHost<bool> {
 		OUTPUTS_LEN = CELL_OUTPUTS_START + CELL_COUNT
 	};
 	enum LightId {
+		DMA_LIGHT,
 		CELL_LIGHTS_START,
 		LIGHTS_LEN = CELL_LIGHTS_START + CELL_COUNT
 	};
@@ -81,6 +82,7 @@ struct Microcosm : Module, DMAHost<bool> {
 			configOutput(CELL_OUTPUTS_START+i, string::f("Cell %s", cellname));
 		}
 		initSaved();
+		dmaClientLightID = DMA_LIGHT;
 	}
 
 	void initSaved() {
@@ -202,6 +204,8 @@ struct MicrocosmWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(38.947, 113.568)), module, Microcosm::RESTORE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.668, 113.568)), module, Microcosm::RANDOM_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(72.39, 113.568)), module, Microcosm::CLEAR_INPUT));
+
+		addChild(createLightCentered<SmallLight<BlueLight>>(Vec(8.0, 8.0), module, Microcosm::DMA_LIGHT));
 
 		for (int i=0; i<Microcosm::CELL_COUNT; ++i) {
 			double x = GRID_START_X + CELL_SIZE * (i % Microcosm::GRID_WIDTH);

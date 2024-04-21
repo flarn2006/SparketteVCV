@@ -7,7 +7,7 @@
 
 using namespace sparkette;
 
-struct RAM40964 : Module, DMAHost<float> {
+struct RAM40964 : DMAHostModule<float> {
 	static constexpr int MATRIX_WIDTH = 64;
 	static constexpr int MATRIX_HEIGHT = 64;
 	static constexpr int PLANE_COUNT = 4;
@@ -134,6 +134,8 @@ struct RAM40964 : Module, DMAHost<float> {
 			dma[i].columns = MATRIX_WIDTH;
 			dma[i].module = this;
 		}
+
+		dmaClientLightID = DMA_LIGHT_G;
 	}
 
 	void clearData() {
@@ -385,11 +387,6 @@ public:
 		json_t* item = json_object_get(root, "fade_lights");
 		if (item)
 			fade_lights = json_boolean_value(item);
-	}
-
-	void onExpanderChange(const ExpanderChangeEvent& e) override {
-		if (e.side == 0)
-			lights[DMA_LIGHT_G].setBrightness(dynamic_cast<DMAClient<float>*>(leftExpander.module) ? 1.f : 0.f);
 	}
 
 	int getDMAChannelCount() const override {

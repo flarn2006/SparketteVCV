@@ -119,6 +119,27 @@ namespace sparkette {
 	};
 
 	template <typename... T>
+	class DMAHostModule : public Module, public DMAHost<T>... {
+		template <typename TFirst, typename... TRest>
+		static inline bool checkForDMAClient(Module *module) {
+			bool result = dynamic_cast<DMAClient<TFirst>*>(module) != nullptr;
+			if constexpr (sizeof...(TRest) > 0)
+				return result || checkForDMAClient<TRest...>(module);
+			else
+				return result;
+		}
+	
+	protected:
+		int dmaClientLightID = -1;
+	
+	public:
+		virtual void onExpanderChange(const ExpanderChangeEvent &e) override {
+			if (e.side == 0 && dmaClientLightID >= 0)
+				lights[dmaClientLightID].setBrightness(checkForDMAClient<T...>(leftExpander.module) ? 1.f : 0.f);
+		}
+	};
+
+	template <typename... T>
 	class DMAExpanderModule : public Module, public DMAClient<T>... {
 		template <typename TFirst, typename... TRest>
 		void setDMAHosts(Module *module) {

@@ -28,4 +28,9 @@ namespace sparkette {
 		return module->configSwitch<TSwitchQuantity>(paramId, minValue, maxValue, defaultValue, name, labels);
 	}
 
+	template <typename TFirst, typename... TRest>
+	struct FirstParameter {
+		typedef TFirst type;
+	};
+
 }

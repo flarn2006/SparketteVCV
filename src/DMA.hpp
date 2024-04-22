@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include "Utility.hpp"
 #include <set>
 
 namespace sparkette {
@@ -118,17 +119,26 @@ namespace sparkette {
 		}
 	};
 
+	template <typename TFirst, typename... TRest>
+	inline bool checkForDMAClient(Module *module) {
+		bool result = dynamic_cast<DMAClient<TFirst>*>(module) != nullptr;
+		if constexpr (sizeof...(TRest) > 0)
+			return result || checkForDMAClient<TRest...>(module);
+		else
+			return result;
+	}
+
+	template <typename TModule, template <typename> typename TTemplate, typename TFirst, typename... TRest>
+	inline int checkMultiDMAChannels(TModule *module, int scratch = 0) {
+		int n = std::max(scratch, module->TTemplate<TFirst>::getDMAChannelCount());
+		if constexpr (sizeof...(TRest) == 0)
+			return n;
+		else
+			return checkMultiDMAChannels<TModule, TTemplate, TRest...>(module, n);
+	}
+
 	template <typename... T>
 	class DMAHostModule : public Module, public DMAHost<T>... {
-		template <typename TFirst, typename... TRest>
-		static inline bool checkForDMAClient(Module *module) {
-			bool result = dynamic_cast<DMAClient<TFirst>*>(module) != nullptr;
-			if constexpr (sizeof...(TRest) > 0)
-				return result || checkForDMAClient<TRest...>(module);
-			else
-				return result;
-		}
-	
 	protected:
 		int dmaClientLightID = -1;
 	
@@ -136,6 +146,10 @@ namespace sparkette {
 		virtual void onExpanderChange(const ExpanderChangeEvent &e) override {
 			if (e.side == 0 && dmaClientLightID >= 0)
 				lights[dmaClientLightID].setBrightness(checkForDMAClient<T...>(leftExpander.module) ? 1.f : 0.f);
+		}
+
+		int getDMAChannelCount() {
+			return checkMultiDMAChannels<DMAHostModule<T...>, DMAHost, T...>(this);
 		}
 	};
 
@@ -146,15 +160,6 @@ namespace sparkette {
 			DMAClient<TFirst>::setDMAHost(dynamic_cast<DMAHost<TFirst>*>(module));
 			if constexpr (sizeof...(TRest) > 0)
 				setDMAHosts<TRest...>(module);
-		}
-
-		template <typename TFirst, typename... TRest>
-		static inline bool checkForDMAClient(Module *module) {
-			bool result = dynamic_cast<DMAClient<TFirst>*>(module) != nullptr;
-			if constexpr (sizeof...(TRest) > 0)
-				return result || checkForDMAClient<TRest...>(module);
-			else
-				return result;
 		}
 
 		template <typename TFirst, typename... TRest>
@@ -182,6 +187,10 @@ namespace sparkette {
 			} else {
 				setDMAHosts<T...>(rightExpander.module);
 			}
+		}
+
+		int getDMAChannelCount() {
+			return checkMultiDMAChannels<DMAExpanderModule<T...>, DMAClient, T...>(this);
 		}
 
 		virtual void process(const ProcessArgs &args) override {

@@ -172,6 +172,15 @@
         "Digital",
         "Sequencer"
       ]
+    },
+    {
+      "slug": "DMAFX",
+      "name": "DMA-FX",
+      "description": "Connects to an adjacent RMA40964 or other DMA host as an expander, providing a selection of miscellaneous effect triggers.",
+      "tags": [
+        "Visual",
+        "Expander"
+      ]
     }
   ]
 }

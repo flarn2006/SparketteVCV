@@ -50,6 +50,14 @@ namespace sparkette {
 		std::size_t size() const {
 			return count;
 		}
+		
+		std::size_t width() const {
+			return columns;
+		}
+
+		std::size_t height() const {
+			return count / columns;
+		}
 
 		accessor operator[](std::size_t index) {
 			accessor acc;

@@ -55,26 +55,6 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 
 	std::vector<float> scratch;
 
-	/*typedef std::pair<InputId, dsp::SchmittTrigger*> InputTrigger;
-
-	static constexpr std::size_t INPUT_TRIGGERS_LEN = 14;
-	InputTrigger input_triggers[INPUT_TRIGGERS_LEN] = {
-		std::make_pair(SCROLL_NW_INPUT, tr_scroll[0]),
-		std::make_pair(SCROLL_N_INPUT, tr_scroll[1]),
-		std::make_pair(SCROLL_NE_INPUT, tr_scroll[2]),
-		std::make_pair(SCROLL_W_INPUT, tr_scroll[3]),
-		std::make_pair(SCROLL_E_INPUT, tr_scroll[4]),
-		std::make_pair(SCROLL_SW_INPUT, tr_scroll[5]),
-		std::make_pair(SCROLL_S_INPUT, tr_scroll[6]),
-		std::make_pair(SCROLL_SE_INPUT, tr_scroll[7]),
-		std::make_pair(ROTATE_CW_INPUT, tr_rotate_cw),
-		std::make_pair(ROTATE_CCW_INPUT, tr_rotate_ccw),
-		std::make_pair(FLIP_V_INPUT, tr_flip_v),
-		std::make_pair(FLIP_H_INPUT, tr_flip_h),
-		std::make_pair(INVERT_INPUT, tr_invert),
-		std::make_pair(RANDOMIZE_INPUT, tr_random)
-	};*/
-
 	void onTrigger(int input, dsp::SchmittTrigger triggers[], int dma_nchan, const std::function<void(int)> &func) {
 		int nchan = inputs[input].getChannels();
 		if (nchan == 1) {
@@ -128,9 +108,9 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		int rows = dma.height();
 		if (dx < 0) dx += cols;
 		if (dy < 0) dy += rows;
+		scratch.resize(std::max(cols, rows));
 
 		if (dx != 0) {
-			scratch.resize(cols);
 			for (int y=0; y<rows; ++y) {
 				for (int x=0; x<cols; ++x)
 					scratch[x] = dma.read(x, y);
@@ -140,7 +120,6 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		}
 
 		if (dy != 0) {
-			scratch.resize(rows);
 			for (int x=0; x<cols; ++x) {
 				for (int y=0; y<rows; ++y)
 					scratch[y] = dma.read(x, y);

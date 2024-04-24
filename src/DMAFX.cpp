@@ -51,24 +51,26 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 	dsp::SchmittTrigger tr_flip_v[PORT_MAX_CHANNELS];
 	dsp::SchmittTrigger tr_flip_h[PORT_MAX_CHANNELS];
 	dsp::SchmittTrigger tr_invert[PORT_MAX_CHANNELS];
+	dsp::SchmittTrigger tr_invert_btn;
 	dsp::SchmittTrigger tr_random[PORT_MAX_CHANNELS];
+	dsp::SchmittTrigger tr_random_btn;
 
 	std::vector<float> scratch;
 
-	void onTrigger(int input, dsp::SchmittTrigger triggers[], int dma_nchan, const std::function<void(int)> &func) {
+	void onTrigger(int input, dsp::SchmittTrigger triggers[], int dma_nchan, const std::function<void(int)> &func, bool force = false) {
 		int nchan = inputs[input].getChannels();
-		if (nchan == 1) {
-			float v = inputs[input].getVoltage();
-			for (int i=0; i<dma_nchan; ++i) {
-				if (triggers[i].process(v))
-					func(i);
-			}
-		} else if (nchan > 1) {
+		if (nchan > 1) {
 			nchan = std::min(nchan, dma_nchan);
 			float voltages[PORT_MAX_CHANNELS];
 			inputs[input].readVoltages(voltages);
 			for (int i=0; i<nchan; ++i) {
-				if (triggers[i].process(voltages[i]))
+				if (triggers[i].process(voltages[i]) || force)
+					func(i);
+			}
+		} else {
+			float v = nchan ? inputs[input].getVoltage() : 0.f;
+			for (int i=0; i<dma_nchan; ++i) {
+				if (triggers[i].process(v) || force)
 					func(i);
 			}
 		}
@@ -77,8 +79,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 	DMAFX() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(SCROLL_AMOUNT_CV_PARAM, -32.f, 32.f, 0.f, "Scroll amount CV");
-		configParam(SCROLL_AMOUNT_PARAM, 1.f, 32.f, 1.f, "Scroll amount");
-		paramQuantities[SCROLL_AMOUNT_PARAM]->snapEnabled = true;
+		configParam(SCROLL_AMOUNT_PARAM, 0.f, 32.f, 1.f, "Scroll amount");
 		configButton(INVERT_PARAM, "Invert");
 		configParam(RAND_MAX_PARAM, -10.f, 10.f, 10.f, "Max random value");
 		configButton(RANDOMIZE_PARAM, "Randomize");
@@ -242,14 +243,30 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 				DMAChannel<float> &dma = *dmaF[ch];
 				std::size_t count = dma.size();
 				for (std::size_t i=0; i<count; ++i)
-					dma[ch] = -dma[ch];
+					dma[i] = -dma[i];
 			} else if (dmaB[ch]) {
 				DMAChannel<bool> &dma = *dmaB[ch];
 				std::size_t count = dma.size();
 				for (std::size_t i=0; i<count; ++i)
-					dma[ch] = !dma[ch];
+					dma[i] = !dma[i];
 			}
-		});
+		}, tr_invert_btn.process(params[INVERT_PARAM].getValue()));
+
+		float rand_off = params[RAND_MIN_PARAM].getValue();
+		float rand_scl = params[RAND_MAX_PARAM].getValue() - rand_off;
+		onTrigger(RANDOMIZE_INPUT, tr_random, dma_nchan, [rand_off, rand_scl, &dmaF, &dmaB](int ch) {
+			if (dmaF[ch]) {
+				DMAChannel<float> &dma = *dmaF[ch];
+				std::size_t count = dma.size();
+				for (std::size_t i=0; i<count; ++i)
+					dma[i] = rand_off + random::uniform() * rand_scl;
+			} else if (dmaB[ch]) {
+				DMAChannel<bool> &dma = *dmaB[ch];
+				std::size_t count = dma.size();
+				for (std::size_t i=0; i<count; ++i)
+					dma[i] = 20.f * (random::uniform() - 0.5f) < rand_off;
+			}
+		}, tr_random_btn.process(params[RANDOMIZE_PARAM].getValue()));
 	}
 };
 

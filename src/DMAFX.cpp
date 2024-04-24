@@ -12,6 +12,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		SCROLL_AMOUNT_CV_PARAM,
 		SCROLL_AMOUNT_PARAM,
 		INVERT_PARAM,
+		INVERT_MODE_PARAM,
 		RAND_MAX_PARAM,
 		RANDOMIZE_PARAM,
 		RAND_MIN_PARAM,
@@ -81,6 +82,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		configParam(SCROLL_AMOUNT_CV_PARAM, -32.f, 32.f, 0.f, "Scroll amount CV");
 		configParam(SCROLL_AMOUNT_PARAM, 0.f, 32.f, 1.f, "Scroll amount");
 		configButton(INVERT_PARAM, "Invert");
+		configSwitch(INVERT_MODE_PARAM, 0.f, 1.f, 1.f, "Inversion mode", {"-x", "10-x"});
 		configParam(RAND_MAX_PARAM, -10.f, 10.f, 10.f, "Max random value");
 		configButton(RANDOMIZE_PARAM, "Randomize");
 		configParam(RAND_MIN_PARAM, -10.f, 10.f, 0.f, "Min random value");
@@ -238,12 +240,13 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 				flipH(*dmaB[ch]);
 		});
 		
+		float invert_offset = 10.f * params[INVERT_MODE_PARAM].getValue();
 		onTrigger(INVERT_INPUT, tr_invert, dma_nchan, [&](int ch) {
 			if (dmaF[ch]) {
 				DMAChannel<float> &dma = *dmaF[ch];
 				std::size_t count = dma.size();
 				for (std::size_t i=0; i<count; ++i)
-					dma[i] = -dma[i];
+					dma[i] = invert_offset - dma[i];
 			} else if (dmaB[ch]) {
 				DMAChannel<bool> &dma = *dmaB[ch];
 				std::size_t count = dma.size();
@@ -284,10 +287,11 @@ struct DMAFXWidget : ModuleWidget {
 
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(15.24, 51.55)), module, DMAFX::SCROLL_AMOUNT_CV_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.918, 51.55)), module, DMAFX::SCROLL_AMOUNT_PARAM));
-		addParam(createParamCentered<VCVButton>(mm2px(Vec(15.293, 98.54)), module, DMAFX::INVERT_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(20.214, 106.901)), module, DMAFX::RAND_MAX_PARAM));
+		addParam(createParamCentered<VCVButton>(mm2px(Vec(14.182, 98.54)), module, DMAFX::INVERT_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(20.214, 98.54)), module, DMAFX::INVERT_MODE_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(20.214, 106.401)), module, DMAFX::RAND_MAX_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(14.182, 109.441)), module, DMAFX::RANDOMIZE_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(20.214, 111.981)), module, DMAFX::RAND_MIN_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(20.214, 112.481)), module, DMAFX::RAND_MIN_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.35, 24.88)), module, DMAFX::SCROLL_NW_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 24.88)), module, DMAFX::SCROLL_N_INPUT));
@@ -302,7 +306,7 @@ struct DMAFXWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.59, 70.6)), module, DMAFX::ROTATE_CCW_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(11.007, 81.289)), module, DMAFX::FLIP_V_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.59, 82.348)), module, DMAFX::FLIP_H_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.35, 98.54)), module, DMAFX::INVERT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(5.821, 98.54)), module, DMAFX::INVERT_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(5.821, 109.441)), module, DMAFX::RANDOMIZE_INPUT));
 
 		addChild(createLightCentered<SmallLight<BlueLight>>(Vec(8.0, 8.0), module, DMAFX::DMA_CLIENT_LIGHT));

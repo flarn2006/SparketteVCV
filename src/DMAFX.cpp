@@ -76,8 +76,9 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 
 	DMAFX() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(SCROLL_AMOUNT_CV_PARAM, -1.f, 1.f, 0.f, "Scroll amount CV");
+		configParam(SCROLL_AMOUNT_CV_PARAM, -32.f, 32.f, 0.f, "Scroll amount CV");
 		configParam(SCROLL_AMOUNT_PARAM, 1.f, 32.f, 1.f, "Scroll amount");
+		paramQuantities[SCROLL_AMOUNT_PARAM]->snapEnabled = true;
 		configButton(INVERT_PARAM, "Invert");
 		configParam(RAND_MAX_PARAM, -10.f, 10.f, 10.f, "Max random value");
 		configButton(RANDOMIZE_PARAM, "Randomize");
@@ -183,6 +184,8 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 	void process(const ProcessArgs& args) override {
 		DMAExpanderModule<float, bool>::process(args);
 		int dma_nchan = std::min(getDMAChannelCount(), PORT_MAX_CHANNELS);
+		if (dma_nchan == 0) return;
+
 		DMAChannel<float> *dmaF[PORT_MAX_CHANNELS];
 		DMAChannel<bool> *dmaB[PORT_MAX_CHANNELS];
 		for (int i=0; i<dma_nchan; ++i) {
@@ -190,14 +193,33 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 			dmaB[i] = DMAClient<bool>::getDMAChannel(i);
 		}
 
+		int scroll_amount_nchan = inputs[SCROLL_AMOUNT_INPUT].getChannels();
+		float scroll_amount[PORT_MAX_CHANNELS];
+		float amount_offset = params[SCROLL_AMOUNT_PARAM].getValue();
+		if (scroll_amount_nchan) {
+			inputs[SCROLL_AMOUNT_INPUT].readVoltages(scroll_amount);
+			float amount_scale = params[SCROLL_AMOUNT_CV_PARAM].getValue();
+			for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
+				scroll_amount[i] *= amount_scale / 10.f;
+				scroll_amount[i] += amount_offset;
+				scroll_amount[i] = std::max(-64.f, std::min(64.f, scroll_amount[i]));
+			}
+		} else {
+			scroll_amount[0] = amount_offset;
+			scroll_amount_nchan = 1;
+		}
+
 		for (int i=0; i<8; ++i) {
 			int dx, dy;
 			getScrollOffsets(SCROLL_NW_INPUT+i, dx, dy);
-			onTrigger(SCROLL_NW_INPUT+i, tr_scroll[i], dma_nchan, [this, dx, dy, &dmaF, &dmaB](int ch) {
+			onTrigger(SCROLL_NW_INPUT+i, tr_scroll[i], dma_nchan, [this, dx, dy, scroll_amount_nchan, &scroll_amount, &dmaF, &dmaB](int ch) {
+				float amount = scroll_amount[ch % scroll_amount_nchan];
+				int DX = (int)((float)dx * amount);
+				int DY = (int)((float)dy * amount);
 				if (dmaF[ch])
-					scroll(*dmaF[ch], dx, dy);
+					scroll(*dmaF[ch], DX, DY);
 				else if (dmaB[ch])
-					scroll(*dmaB[ch], dx, dy);
+					scroll(*dmaB[ch], DX, DY);
 			});
 		}
 

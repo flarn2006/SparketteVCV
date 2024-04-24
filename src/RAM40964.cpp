@@ -213,9 +213,9 @@ public:
 		outputs[Y_OUTPUT].setChannels(phasor_nchan);
 		for (int i=0; i<phasor_nchan; ++i) {
 			if (phasor_voltages[i] >= 0.f) {
-				int phasor_address = (int)(phasor_voltages[i] / 10.f * (MATRIX_WIDTH*MATRIX_HEIGHT-1)) % (MATRIX_WIDTH*MATRIX_HEIGHT);
-				x_out_voltages[i] = 10.f * (float)(phasor_address % MATRIX_WIDTH) / (MATRIX_WIDTH-1);
-				y_out_voltages[i] = 10.f * (float)(phasor_address / MATRIX_WIDTH) / (MATRIX_HEIGHT-1);
+				int phasor_address = (int)(phasor_voltages[i] / 10.f * (MATRIX_WIDTH*MATRIX_HEIGHT)) % (MATRIX_WIDTH*MATRIX_HEIGHT);
+				x_out_voltages[i] = 10.f * (float)(phasor_address % MATRIX_WIDTH) / (MATRIX_WIDTH);
+				y_out_voltages[i] = 10.f * (float)(phasor_address / MATRIX_WIDTH) / (MATRIX_HEIGHT);
 			}
 		}
 		outputs[X_OUTPUT].writeVoltages(x_out_voltages);

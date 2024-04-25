@@ -24,6 +24,7 @@ struct RAM40964 : DMAHostModule<float> {
 		DISPMODE_PARAM,
 		BRIGHTNESS_PARAM,
 		WRITE_PARAM,
+		PHASOR_TO_ADDR_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -106,6 +107,7 @@ struct RAM40964 : DMAHostModule<float> {
 		configParam(BRIGHTNESS_PARAM, 0.f, 1.f, 0.5f, "Brightness", "%", 0.f, 100.f);
 		configSwitch(WRITE_PARAM, 0.f, 1.f, 0.f, "Write", {"when gate active", "always"});
 		configSwitch(MONITOR_PARAM, 0.f, 1.f, 1.f, "Data monitor", {"Read", "Write"});
+		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 1.f, "Phasor as write address", {"Off", "On"});
 		configInput(X_INPUT, "X address (read)");
 		configInput(Y_INPUT, "Y address (read)");
 		configInput(CLEAR_INPUT, "Clear trigger");
@@ -206,6 +208,7 @@ public:
 		// Process phasor input/outputs
 		int phasor_nchan = inputs[PHASOR_INPUT].getChannels();
 		float phasor_voltages[PORT_MAX_CHANNELS];
+		int phasor_addresses[PORT_MAX_CHANNELS];
 		float x_out_voltages[PORT_MAX_CHANNELS];
 		float y_out_voltages[PORT_MAX_CHANNELS];
 		inputs[PHASOR_INPUT].readVoltages(phasor_voltages);
@@ -213,9 +216,9 @@ public:
 		outputs[Y_OUTPUT].setChannels(phasor_nchan);
 		for (int i=0; i<phasor_nchan; ++i) {
 			if (phasor_voltages[i] >= 0.f) {
-				int phasor_address = (int)(phasor_voltages[i] / 10.f * (MATRIX_WIDTH*MATRIX_HEIGHT)) % (MATRIX_WIDTH*MATRIX_HEIGHT);
-				x_out_voltages[i] = 10.f * (float)(phasor_address % MATRIX_WIDTH) / (MATRIX_WIDTH);
-				y_out_voltages[i] = 10.f * (float)(phasor_address / MATRIX_WIDTH) / (MATRIX_HEIGHT);
+				phasor_addresses[i] = (int)(phasor_voltages[i] / 10.f * (MATRIX_WIDTH*MATRIX_HEIGHT)) % (MATRIX_WIDTH*MATRIX_HEIGHT);
+				x_out_voltages[i] = 10.f * (float)(phasor_addresses[i] % MATRIX_WIDTH) / (MATRIX_WIDTH);
+				y_out_voltages[i] = 10.f * (float)(phasor_addresses[i] / MATRIX_WIDTH) / (MATRIX_HEIGHT);
 			}
 		}
 		outputs[X_OUTPUT].writeVoltages(x_out_voltages);
@@ -255,7 +258,12 @@ public:
 		int addresses_r[PORT_MAX_CHANNELS];
 		int addresses_w[PORT_MAX_CHANNELS];
 		fillAddressArray(xoff, yoff, xa_nchan, ya_nchan, xa, ya, addresses_r, poly_increment);
-		if (xw_nchan == 0 && yw_nchan == 0 && (xa_nchan > 0 || ya_nchan > 0)) {
+		if (xw_nchan == 0 && yw_nchan == 0 && phasor_nchan > 0 && params[PHASOR_TO_ADDR_PARAM].getValue() > 0.5f) {
+			std::memcpy(addresses_w, phasor_addresses, sizeof(int) * phasor_nchan);
+			for (int i=phasor_nchan; i<PORT_MAX_CHANNELS; ++i)
+				addresses_w[i] = addresses_w[phasor_nchan-1];
+			xw_nchan = yw_nchan = phasor_nchan;
+		} else if (xw_nchan == 0 && yw_nchan == 0 && (xa_nchan > 0 || ya_nchan > 0)) {
 			std::memcpy(addresses_w, addresses_r, sizeof(addresses_r));
 			xw_nchan = xa_nchan;
 			yw_nchan = ya_nchan;
@@ -418,8 +426,9 @@ struct RAM40964Widget : ModuleWidget {
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(100.538, 109.576)), module, RAM40964::INCREMENT_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(106.008, 109.576)), module, RAM40964::DISPMODE_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(88.9, 107.43)), module, RAM40964::BRIGHTNESS_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(98.66, 40.332)), module, RAM40964::WRITE_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(98.16, 40.332)), module, RAM40964::WRITE_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(63.5, 11.786)), module, RAM40964::MONITOR_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(82.2, 10.91)), module, RAM40964::PHASOR_TO_ADDR_PARAM));
 
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 10.91)), module, RAM40964::X_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 23.61)), module, RAM40964::Y_INPUT));

@@ -27,15 +27,15 @@
      units="in"
      inkscape:showpageshadow="2"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="1.8288141"
-     inkscape:cx="304.84236"
-     inkscape:cy="272.85441"
+     inkscape:zoom="4.1753683"
+     inkscape:cx="281.05305"
+     inkscape:cy="84.543441"
      inkscape:window-width="1920"
      inkscape:window-height="1008"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer4">
+     inkscape:current-layer="layer1">
     <inkscape:grid
        type="xygrid"
        id="grid1608"
@@ -316,7 +316,7 @@
        id="path48" />
     <path
        style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
-       d="M 74.718333,17.259996 V 10.909995"
+       d="m 74.718333,17.259996 v -6.350001 l 16.721668,10e-7"
        id="path49" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#ff70ff;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"

@@ -69,6 +69,7 @@ struct RAM40964 : DMAHostModule<float> {
 		MATRIX_LIGHT_START = CH_RW_LIGHTS_G + 2*PORT_MAX_CHANNELS,
 		DMA_LIGHT_G = MATRIX_LIGHT_START + 3*MATRIX_WIDTH*MATRIX_HEIGHT,
 		DMA_LIGHT_R,
+		PHASOR_ADDR_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -263,10 +264,7 @@ public:
 			for (int i=phasor_nchan; i<PORT_MAX_CHANNELS; ++i)
 				addresses_w[i] = addresses_w[phasor_nchan-1];
 			xw_nchan = yw_nchan = phasor_nchan;
-		} else if (xw_nchan == 0 && yw_nchan == 0 && (xa_nchan > 0 || ya_nchan > 0)) {
-			std::memcpy(addresses_w, addresses_r, sizeof(addresses_r));
-			xw_nchan = xa_nchan;
-			yw_nchan = ya_nchan;
+			lights[PHASOR_ADDR_LIGHT].setBrightnessSmooth(1.f, args.sampleTime);
 		} else {
 			fillAddressArray(xoff, yoff, xw_nchan, yw_nchan, xw, yw, addresses_w, poly_increment);
 			if (xa_nchan == 0 && ya_nchan == 0 && (xw_nchan > 0 || yw_nchan > 0)) {
@@ -274,6 +272,7 @@ public:
 				xa_nchan = xw_nchan;
 				ya_nchan = yw_nchan;
 			}
+			lights[PHASOR_ADDR_LIGHT].setBrightnessSmooth(0.f, args.sampleTime);
 		}
 
 		int addr_count_r = std::max(xa_nchan, ya_nchan);
@@ -463,6 +462,7 @@ struct RAM40964Widget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.388, 94.336)), module, RAM40964::DATA3_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(98.66, 47.0)), module, RAM40964::WRITE_LIGHT));
 		addChild(createLightCentered<SmallLight<GreenRedLight>>(Vec(8.0, 8.0), module, RAM40964::DMA_LIGHT_G));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(82.2, 5.5)), module, RAM40964::PHASOR_ADDR_LIGHT));
 
 		addChild(createLightMatrix<TinySimpleLight<TrueRGBLight>>(mm2px(Vec(3.54, 42.39)), mm2px(Vec(79.28, 79.28)), module, RAM40964::MATRIX_LIGHT_START, RAM40964::MATRIX_WIDTH, RAM40964::MATRIX_HEIGHT));
 	}

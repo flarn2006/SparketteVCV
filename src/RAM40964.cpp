@@ -381,7 +381,7 @@ public:
 			updateDataLights(args.sampleTime);
 		}
 
-		lights[DMA_LIGHT_R].setBrightness(dma_write_led_pulse.process(args.sampleTime) ? 1.f : 0.f);
+		lights[DMA_LIGHT_R].setBrightnessSmooth(dma_write_led_pulse.process(args.sampleTime) ? 1.f : 0.f, args.sampleTime);
 	}
 
 	json_t* dataToJson() override {

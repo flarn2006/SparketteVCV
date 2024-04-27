@@ -108,7 +108,7 @@ struct RAM40964 : DMAHostModule<float> {
 		configParam(BRIGHTNESS_PARAM, 0.f, 1.f, 0.5f, "Brightness", "%", 0.f, 100.f);
 		configSwitch(WRITE_PARAM, 0.f, 1.f, 0.f, "Write", {"when gate active", "always"});
 		configSwitch(MONITOR_PARAM, 0.f, 1.f, 1.f, "Data monitor", {"Read", "Write"});
-		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 0.f, "Phasor as write address", {"Off", "On"});
+		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 1.f, "Phasor as write address", {"Off", "On"});
 		configInput(X_INPUT, "X address (read)");
 		configInput(Y_INPUT, "Y address (read)");
 		configInput(CLEAR_INPUT, "Clear trigger");

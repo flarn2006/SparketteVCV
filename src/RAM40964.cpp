@@ -94,6 +94,7 @@ struct RAM40964 : DMAHostModule<float> {
 	bool data_dirty = false;
 	DMA dma[PLANE_COUNT];
 	dsp::PulseGenerator dma_write_led_pulse;
+	bool save_memory = false;
 
 	RAM40964() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -387,6 +388,16 @@ public:
 	json_t* dataToJson() override {
 		json_t* root = json_object();
 		json_object_set_new(root, "fade_lights", json_boolean(fade_lights));
+		if (save_memory) {
+			json_t* array = json_array();
+			for (int i=0; i<PLANE_COUNT; ++i) {
+				json_t* plane = json_array();
+				for (int j=0; j<MATRIX_WIDTH*MATRIX_HEIGHT; ++j)
+					json_array_append_new(plane, json_real(data[j][i]));
+				json_array_append_new(array, plane);
+			}
+			json_object_set_new(root, "memory_contents", array);
+		}
 		return root;
 	}
 
@@ -394,6 +405,18 @@ public:
 		json_t* item = json_object_get(root, "fade_lights");
 		if (item)
 			fade_lights = json_boolean_value(item);
+
+		item = json_object_get(root, "memory_contents");
+		if (item) {
+			save_memory = true;
+			for (int i=0; i<PLANE_COUNT; ++i) {
+				json_t* plane = json_array_get(item, i);
+				for (int j=0; j<MATRIX_WIDTH*MATRIX_HEIGHT; ++j)
+					data[j][i] = (float)json_real_value(json_array_get(plane, j));
+			}
+		} else {
+			save_memory = false;
+		}
 	}
 
 	int getDMAChannelCount() const override {
@@ -478,6 +501,7 @@ struct RAM40964Widget : ModuleWidget {
 		menu->addChild(item);
 
 		menu->addChild(createBoolPtrMenuItem("Fade lights", "", &module->fade_lights));
+		menu->addChild(createBoolPtrMenuItem("Save memory contents", "", &module->save_memory));
 	}
 };
 

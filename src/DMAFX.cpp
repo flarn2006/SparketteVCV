@@ -43,6 +43,8 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		DMA_CLIENT_LIGHT,
 		DMA_HOST_LIGHT_G,
 		DMA_HOST_LIGHT_R,
+		ROTATION_LIGHT_G,
+		ROTATION_LIGHT_R,
 		LIGHTS_LEN
 	};
 
@@ -184,10 +186,55 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		}
 	}
 
+	template <typename T>
+	void rotateCW(DMAChannel<T> &dma) {
+		int n = dma.width(); // Assuming the matrix is square
+
+		// Transpose the matrix
+		for (int y = 0; y < n; ++y) {
+			for (int x = y + 1; x < n; ++x) {
+				T temp = dma.read(x, y);
+				dma.write(x, y, dma.read(y, x));
+				dma.write(y, x, temp);
+			}
+		}
+
+		// Flip horizontally
+		for (int y = 0; y < n; ++y) {
+			for (int x = 0; x < n / 2; ++x) {
+				T temp = dma.read(x, y);
+				dma.write(x, y, dma.read(n - 1 - x, y));
+				dma.write(n - 1 - x, y, temp);
+			}
+		}
+	}
+
+	template <typename T>
+	void rotateCCW(DMAChannel<T> &dma) {
+		int n = dma.width(); // Assuming the matrix is square
+
+		// Transpose the matrix
+		for (int y = 0; y < n; ++y) {
+			for (int x = y + 1; x < n; ++x) {
+				T temp = dma.read(x, y);
+				dma.write(x, y, dma.read(y, x));
+				dma.write(y, x, temp);
+			}
+		}
+
+		// Flip vertically
+		for (int x = 0; x < n; ++x) {
+			for (int y = 0; y < n / 2; ++y) {
+				T temp = dma.read(x, y);
+				dma.write(x, y, dma.read(x, n - 1 - y));
+				dma.write(x, n - 1 - y, temp);
+			}
+		}
+	}
+
 	void process(const ProcessArgs& args) override {
 		DMAExpanderModule<float, bool>::process(args);
 		int dma_nchan = std::min(getDMAChannelCount(), PORT_MAX_CHANNELS);
-		if (dma_nchan == 0) return;
 
 		DMAChannel<float> *dmaF[PORT_MAX_CHANNELS];
 		DMAChannel<bool> *dmaB[PORT_MAX_CHANNELS];
@@ -225,6 +272,30 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 					scroll(*dmaB[ch], DX, DY);
 			});
 		}
+
+		int rotate_lights = 0;
+		for (int i=0; i<dma_nchan; ++i) {
+			if (dmaF[i])
+				rotate_lights |= (dmaF[i]->width() == dmaF[i]->height()) ? 1 : 2;
+			if (dmaB[i])
+				rotate_lights |= (dmaB[i]->width() == dmaB[i]->height()) ? 1 : 2;
+		}
+		lights[ROTATION_LIGHT_G].setBrightnessSmooth((rotate_lights & 1) ? 1.f : 0.f, args.sampleTime);
+		lights[ROTATION_LIGHT_R].setBrightnessSmooth((rotate_lights & 2) ? 1.f : 0.f, args.sampleTime);
+
+		onTrigger(ROTATE_CW_INPUT, tr_rotate_cw, dma_nchan, [&](int ch) {
+			if (dmaF[ch] && dmaF[ch]->width() == dmaF[ch]->height())
+				rotateCW(*dmaF[ch]);
+			if (dmaB[ch] && dmaB[ch]->width() == dmaB[ch]->height())
+				rotateCW(*dmaB[ch]);
+		});
+
+		onTrigger(ROTATE_CCW_INPUT, tr_rotate_ccw, dma_nchan, [&](int ch) {
+			if (dmaF[ch] && dmaF[ch]->width() == dmaF[ch]->height())
+				rotateCCW(*dmaF[ch]);
+			if (dmaB[ch] && dmaB[ch]->width() == dmaB[ch]->height())
+				rotateCCW(*dmaB[ch]);
+		});
 
 		onTrigger(FLIP_V_INPUT, tr_flip_v, dma_nchan, [&](int ch) {
 			if (dmaF[ch])
@@ -311,6 +382,8 @@ struct DMAFXWidget : ModuleWidget {
 
 		addChild(createLightCentered<SmallLight<BlueLight>>(Vec(8.0, 8.0), module, DMAFX::DMA_CLIENT_LIGHT));
 		addChild(createLightCentered<SmallLight<GreenRedLight>>(Vec(box.size.x - 8.0, 8.0), module, DMAFX::DMA_HOST_LIGHT_G));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(15.24, 68.8)), module, DMAFX::ROTATION_LIGHT_G));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 72.4)), module, DMAFX::ROTATION_LIGHT_R));
 
 		channel_disp = createWidget<GlowingWidget<Label>>(mm2px(Vec(20.805, 9.381)));
 		channel_disp->text = "#";

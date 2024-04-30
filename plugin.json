@@ -181,6 +181,14 @@
         "Visual",
         "Expander"
       ]
+    },
+    {
+      "slug": "Accessor",
+      "name": "Accessor",
+      "description": "Connects to an adjacent DMA-compatible module to allow for reading and writing of memory.",
+      "tags": [
+        "Expander"
+      ]
     }
   ]
 }

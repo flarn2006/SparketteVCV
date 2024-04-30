@@ -33,4 +33,6 @@ namespace sparkette {
 		typedef TFirst type;
 	};
 
+	void fillAddressArray(int xoff, int yoff, int x_nchan, int y_nchan, const float *x_array, const float *y_array, int *addresses, int poly_increment, int matrix_width, int matrix_height);
+
 }

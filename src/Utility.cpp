@@ -78,4 +78,27 @@ namespace sparkette {
 		input.readVoltages(channels);
 		return transform2DByMatrixInput(matrix_nchan, channels, nchan, x, y);
 	}
+
+	void fillAddressArray(int xoff, int yoff, int x_nchan, int y_nchan, const float *x_array, const float *y_array, int *addresses, int poly_increment, int matrix_width, int matrix_height) {
+		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
+			int x = xoff, y = yoff;
+			if (i < y_nchan) {
+				y += y_array[i] / 10 * matrix_height;
+				if (i < x_nchan)
+					x += (int)(x_array[i] / 10 * matrix_width);
+				addresses[i] = matrix_width * y + x;
+			} else if (i < x_nchan) {
+				x += (int)(x_array[i] / 10 * (matrix_width*matrix_height-1));
+				addresses[i] = matrix_width * y + x;
+			} else if (i > 0) {
+				addresses[i] = (addresses[i-1] + poly_increment) % (matrix_width*matrix_height);
+			} else {
+				addresses[i] = matrix_width * y + x;
+			}
+			if (addresses[i] < 0)
+				addresses[i] = 0;
+			else
+				addresses[i] %= matrix_width*matrix_height;
+		}
+	}
 }

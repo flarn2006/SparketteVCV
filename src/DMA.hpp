@@ -171,7 +171,7 @@ namespace sparkette {
 		}
 
 		template <typename TFirst, typename... TRest>
-		bool checkHostReady(bool &hostFound) {
+		bool checkHostReady(bool &hostFound) const {
 			DMAHost<TFirst> *host = DMAClient<TFirst>::getDMAHost();
 			if (host) {
 				hostFound = true;
@@ -186,6 +186,15 @@ namespace sparkette {
 	protected:
 		int dmaHostLightID = -1; //intended to be a GreenRedLight, so dmaHostLightID+1 will be used as well
 		int dmaClientLightID = -1;
+		
+		bool isHostReady() const {
+			bool _;
+			return checkHostReady<T...>(_);
+		}
+
+		bool isHostReady(bool &hostFound) const {
+			return checkHostReady<T...>(hostFound);
+		}
 		
 	public:
 		virtual void onExpanderChange(const ExpanderChangeEvent &e) override {

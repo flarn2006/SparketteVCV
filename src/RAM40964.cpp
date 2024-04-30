@@ -181,31 +181,6 @@ struct RAM40964 : DMAHostModule<float> {
 		data_dirty = false;
 	}
 
-private:
-	void fillAddressArray(int xoff, int yoff, int x_nchan, int y_nchan, const float* x_array, const float* y_array, int* addresses, int poly_increment) const {
-		for (int i=0; i<PORT_MAX_CHANNELS; ++i) {
-			int x = xoff, y = yoff;
-			if (i < y_nchan) {
-				y += y_array[i] / 10 * MATRIX_HEIGHT;
-				if (i < x_nchan)
-					x += (int)(x_array[i] / 10 * MATRIX_WIDTH);
-				addresses[i] = MATRIX_WIDTH * y + x;
-			} else if (i < x_nchan) {
-				x += (int)(x_array[i] / 10 * (MATRIX_WIDTH*MATRIX_HEIGHT-1));
-				addresses[i] = MATRIX_WIDTH * y + x;
-			} else if (i > 0) {
-				addresses[i] = (addresses[i-1] + poly_increment) % (MATRIX_WIDTH*MATRIX_HEIGHT);
-			} else {
-				addresses[i] = MATRIX_WIDTH * y + x;
-			}
-			if (addresses[i] < 0)
-				addresses[i] = 0;
-			else
-				addresses[i] %= MATRIX_WIDTH*MATRIX_HEIGHT;
-		}
-	}
-public:
-
 	void process(const ProcessArgs& args) override {
 		// Process phasor input/outputs
 		int phasor_nchan = inputs[PHASOR_INPUT].getChannels();
@@ -259,7 +234,7 @@ public:
 		// Determine which addresses to read/write
 		int addresses_r[PORT_MAX_CHANNELS];
 		int addresses_w[PORT_MAX_CHANNELS];
-		fillAddressArray(xoff, yoff, xa_nchan, ya_nchan, xa, ya, addresses_r, poly_increment);
+		fillAddressArray(xoff, yoff, xa_nchan, ya_nchan, xa, ya, addresses_r, poly_increment, MATRIX_WIDTH, MATRIX_HEIGHT);
 		if (xw_nchan == 0 && yw_nchan == 0 && phasor_nchan > 0 && params[PHASOR_TO_ADDR_PARAM].getValue() > 0.5f) {
 			std::memcpy(addresses_w, phasor_addresses, sizeof(int) * phasor_nchan);
 			for (int i=phasor_nchan; i<PORT_MAX_CHANNELS; ++i)
@@ -267,7 +242,7 @@ public:
 			xw_nchan = yw_nchan = phasor_nchan;
 			lights[PHASOR_ADDR_LIGHT].setBrightnessSmooth(1.f, args.sampleTime);
 		} else {
-			fillAddressArray(xoff, yoff, xw_nchan, yw_nchan, xw, yw, addresses_w, poly_increment);
+			fillAddressArray(xoff, yoff, xw_nchan, yw_nchan, xw, yw, addresses_w, poly_increment, MATRIX_WIDTH, MATRIX_HEIGHT);
 			if (xa_nchan == 0 && ya_nchan == 0 && (xw_nchan > 0 || yw_nchan > 0)) {
 				std::memcpy(addresses_r, addresses_w, sizeof(addresses_w));
 				xa_nchan = xw_nchan;

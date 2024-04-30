@@ -82,7 +82,7 @@ struct Accessor : DMAExpanderModule<float, bool> {
 		for (int i=0; i<write_nchan; ++i) {
 			if (write_all || write_voltages[i] > 0.5f) {
 				if (i < data_nchan)
-					data_in = convertDataInput<T>(data_voltages[i]);
+					data_in = convertDataInput<T>(data_voltages[i] * data_scale);
 				dma[addresses[i]] = data_in;
 			}
 		}

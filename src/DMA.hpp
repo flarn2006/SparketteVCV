@@ -177,8 +177,12 @@ namespace sparkette {
 				hostFound = true;
 				if (host->readyForDMA())
 					return true;
-			} else if constexpr (sizeof...(TRest) > 0) {
-				return checkHostReady<TRest...>(hostFound);
+				else
+					goto next_host_type;
+			} else {
+			next_host_type:
+				if constexpr (sizeof...(TRest) > 0)
+					return checkHostReady<TRest...>(hostFound);
 			}
 			return false;
 		}

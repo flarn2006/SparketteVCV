@@ -59,4 +59,10 @@ void SevenSegmentDisplay::setColor(const NVGcolor& newColor) {
 	offColor.b /= 4;
 }
 
+CKSSWithLine::CKSSWithLine() {
+	shadow->opacity = 0.0;
+	addFrame(Svg::load(asset::system("res/ComponentLibrary/CKSS_0.svg")));
+	addFrame(Svg::load(asset::plugin(pluginInstance, "res/CKSS_1_line.svg")));
+}
+
 }

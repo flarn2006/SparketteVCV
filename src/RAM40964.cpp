@@ -3,6 +3,7 @@
 #include "Knobs.hpp"
 #include "Utility.hpp"
 #include "DMA.hpp"
+#include "Widgets.hpp"
 #include <cstring>
 
 using namespace sparkette;
@@ -109,7 +110,7 @@ struct RAM40964 : DMAHostModule<float> {
 		configParam(BRIGHTNESS_PARAM, 0.f, 1.f, 0.5f, "Brightness", "%", 0.f, 100.f);
 		configSwitch(WRITE_PARAM, 0.f, 1.f, 0.f, "Write", {"when gate active", "always"});
 		configSwitch(MONITOR_PARAM, 0.f, 1.f, 1.f, "Data monitor", {"Read", "Write"});
-		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 1.f, "Phasor as write address", {"Off", "On"});
+		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 0.f, "Phasor as write address", {"Off", "On"});
 		configInput(X_INPUT, "X address (read)");
 		configInput(Y_INPUT, "Y address (read)");
 		configInput(CLEAR_INPUT, "Clear trigger");
@@ -425,7 +426,7 @@ struct RAM40964Widget : ModuleWidget {
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(88.9, 107.43)), module, RAM40964::BRIGHTNESS_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(98.16, 40.332)), module, RAM40964::WRITE_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(63.5, 11.786)), module, RAM40964::MONITOR_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(82.2, 10.91)), module, RAM40964::PHASOR_TO_ADDR_PARAM));
+		addParam(createParamCentered<CKSSWithLine>(mm2px(Vec(82.2, 10.6275)), module, RAM40964::PHASOR_TO_ADDR_PARAM));
 
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 10.91)), module, RAM40964::X_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 23.61)), module, RAM40964::Y_INPUT));

@@ -35,4 +35,8 @@ public:
 
 };
 
+struct CKSSWithLine : app::SvgSwitch {
+	CKSSWithLine();
+};
+
 }

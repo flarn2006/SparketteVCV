@@ -60,8 +60,8 @@ struct RGBMatrix : Module {
 
 	RGBMatrix() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN + SUBPIXEL_COUNT);
-		configSwitchWithLabels(this, XPOL_PARAM, 0.f, 1.f, 0.f, "X Polarity", "Unipolar", "Bipolar", nullptr);
-		configSwitchWithLabels(this, YPOL_PARAM, 0.f, 1.f, 0.f, "Y Polarity", "Unipolar", "Bipolar", nullptr);
+		configSwitch(XPOL_PARAM, 0.f, 1.f, 0.f, "X Polarity", {"Unipolar", "Bipolar"});
+		configSwitch(YPOL_PARAM, 0.f, 1.f, 0.f, "Y Polarity", {"Unipolar", "Bipolar"});
 		configParam(SAMPLECOUNT_PARAM, 1.f, 30.f, 2.f, "Samples Per Pixel");
 		paramQuantities[SAMPLECOUNT_PARAM]->snapEnabled = true;
 		configParam(RSCL_PARAM, -1.f, 1.f, 1.f, "Red CV Scale");

@@ -64,9 +64,9 @@ struct ColorMixer : Module {
 		configParam(BG_G_OFS_PARAM, 0.f, 1.f, 0.f, "Background Green/Sat Offset");
 		configParam(BG_B_SCL_PARAM, -1.f, 1.f, 1.f, "Background Blue/Val Scale");
 		configParam(BG_B_OFS_PARAM, 0.f, 1.f, 0.f, "Background Blue/Sat Offset");
-		configSwitchWithLabels(this, BG_MODE_PARAM, 0.f, 2.f, 1.f, "Background Mode", "Off", "RGB", "HSV", nullptr);
-		configSwitchWithLabels(this, LIGHTS_PARAM, 0.f, 2.f, 2.f, "Enabled Lights", "1", "2", "All", nullptr);
-		configSwitchWithLabels(this, CLAMP_PARAM, 0.f, 2.f, 2.f, "Clamp Mode", "Off", "Once at end", "Each layer", nullptr);
+		configSwitch(BG_MODE_PARAM, 0.f, 2.f, 1.f, "Background Mode", {"Off", "RGB", "HSV"});
+		configSwitch(LIGHTS_PARAM, 0.f, 2.f, 2.f, "Enabled Lights", {"1", "2", "All"});
+		configSwitch(CLAMP_PARAM, 0.f, 2.f, 2.f, "Clamp Mode", {"Off", "Once at end", "Each layer"});
 
 		for (int i=0; i<NUM_LAYERS; ++i) {
 			int param_base = LAYER_PARAMS_START + PARAMS_PER_LAYER * i;
@@ -79,7 +79,7 @@ struct ColorMixer : Module {
 			configParam(param_base+5, 0.f, 1.f, 0.f, string::f("Layer %d Blue/Val Offset", display_num));
 			configParam(param_base+6, -1.f, 1.f, 1.f, string::f("Layer %d Alpha Scale", display_num));
 			configParam(param_base+7, 0.f, 1.f, 0.f, string::f("Layer %d Alpha Offset", display_num));
-			configSwitchWithLabels(this, param_base+8, 0.f, 1.f, 0.f, string::f("Layer %d Color Space", display_num), "RGB", "HSV", nullptr);
+			configSwitch(param_base+8, 0.f, 1.f, 0.f, string::f("Layer %d Color Space", display_num), {"RGB", "HSV"});
 			configParam(param_base+9, 0.f, 4.f, 0.f, string::f("Layer %d Blend Mode", display_num));
 			paramQuantities[param_base+9]->snapEnabled = true;
 		}

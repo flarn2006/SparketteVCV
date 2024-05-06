@@ -135,7 +135,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		}
 	}
 
-	constexpr void getScrollOffsets(int input, int &dx, int &dy) {
+	void getScrollOffsets(int input, int &dx, int &dy) {
 		int n = input - SCROLL_NW_INPUT;
 		if (n < 3) {
 			dy = -1;

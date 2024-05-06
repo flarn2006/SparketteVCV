@@ -316,7 +316,7 @@ struct Busybox : Module {
 			lfos[i]->process(args);
 		}
 
-		float r = (float)std::rand() / RAND_MAX;
+		float r = random::uniform();
 		outputs[NOISE_OUTPUT].setVoltage(10.f * r - 5.f);
 
 		for (std::size_t i=0; i<ADSR_VCA_COUNT; ++i)

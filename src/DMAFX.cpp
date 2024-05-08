@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "DMA.hpp"
 #include "Widgets.hpp"
+#include "Lights.hpp"
 #include <utility>
 #include <functional>
 #include <vector>
@@ -16,6 +17,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		RAND_MAX_PARAM,
 		RANDOMIZE_PARAM,
 		RAND_MIN_PARAM,
+		SCROLL_WRAP_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -45,6 +47,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		DMA_HOST_LIGHT_R,
 		ROTATION_LIGHT_G,
 		ROTATION_LIGHT_R,
+		SCROLL_WRAP_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -88,6 +91,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		configParam(RAND_MAX_PARAM, -10.f, 10.f, 10.f, "Max random value");
 		configButton(RANDOMIZE_PARAM, "Randomize");
 		configParam(RAND_MIN_PARAM, -10.f, 10.f, 0.f, "Min random value");
+		configSwitch(SCROLL_WRAP_PARAM, 0.f, 1.f, 1.f, "Wrap", {"disabled", "enabled"});
 		configInput(SCROLL_NW_INPUT, "Scroll NW");
 		configInput(SCROLL_N_INPUT, "Scroll N");
 		configInput(SCROLL_NE_INPUT, "Scroll NE");
@@ -110,27 +114,40 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 
 	template <typename T>
 	void scroll(DMAChannel<T> &dma, int dx, int dy) {
+		bool wrap = params[SCROLL_WRAP_PARAM].getValue() > 0.5f;
 		int cols = dma.width();
 		int rows = dma.height();
-		if (dx < 0) dx += cols;
-		if (dy < 0) dy += rows;
 		scratch.resize(std::max(cols, rows));
 
+		// Handle horizontal scrolling
 		if (dx != 0) {
-			for (int y=0; y<rows; ++y) {
-				for (int x=0; x<cols; ++x)
+			int dx_mod = (dx % cols + cols) % cols; // Ensure dx_mod is positive
+			for (int y = 0; y < rows; ++y) {
+				for (int x = 0; x < cols; ++x)
 					scratch[x] = dma.read(x, y);
-				for (int x=0; x<cols; ++x)
-					dma.write((x + dx) % cols, y, scratch[x]);
+				for (int x = 0; x < cols; ++x) {
+					int targetX = (x + dx_mod) % cols;
+					if (wrap || (x + dx < cols && x + dx >= 0))
+						dma.write(targetX, y, scratch[x]);
+					else
+						dma.write(targetX, y, 0); // Zero out pixels that scroll beyond the edge
+				}
 			}
 		}
 
+		// Handle vertical scrolling
 		if (dy != 0) {
-			for (int x=0; x<cols; ++x) {
-				for (int y=0; y<rows; ++y)
+			int dy_mod = (dy % rows + rows) % rows; // Ensure dy_mod is positive
+			for (int x = 0; x < cols; ++x) {
+				for (int y = 0; y < rows; ++y)
 					scratch[y] = dma.read(x, y);
-				for (int y=0; y<rows; ++y)
-					dma.write(x, (y + dy) % rows, scratch[y]);
+				for (int y = 0; y < rows; ++y) {
+					int targetY = (y + dy_mod) % rows;
+					if (wrap || (y + dy < rows && y + dy >= 0))
+						dma.write(x, targetY, scratch[y]);
+					else
+						dma.write(x, targetY, 0); // Zero out pixels that scroll beyond the edge
+				}
 			}
 		}
 	}
@@ -235,6 +252,8 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 	void process(const ProcessArgs& args) override {
 		DMAExpanderModule<float, bool>::process(args);
 		int dma_nchan = std::min(getDMAChannelCount(), PORT_MAX_CHANNELS);
+
+		lights[SCROLL_WRAP_LIGHT].setBrightness(params[SCROLL_WRAP_PARAM].getValue());
 
 		DMAChannel<float> *dmaF[PORT_MAX_CHANNELS];
 		DMAChannel<bool> *dmaB[PORT_MAX_CHANNELS];
@@ -363,6 +382,7 @@ struct DMAFXWidget : ModuleWidget {
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(20.214, 106.401)), module, DMAFX::RAND_MAX_PARAM));
 		addParam(createParamCentered<VCVButton>(mm2px(Vec(14.182, 109.441)), module, DMAFX::RANDOMIZE_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(20.214, 112.481)), module, DMAFX::RAND_MIN_PARAM));
+		addParam(createLightParamCentered<VCVLightLatch<MediumLight<PurpleLight>>>(mm2px(Vec(15.24, 33.77)), module, DMAFX::SCROLL_WRAP_PARAM, DMAFX::SCROLL_WRAP_LIGHT));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.35, 24.88)), module, DMAFX::SCROLL_NW_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 24.88)), module, DMAFX::SCROLL_N_INPUT));

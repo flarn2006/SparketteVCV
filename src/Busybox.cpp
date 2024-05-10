@@ -53,12 +53,18 @@ struct Busybox : Module {
 		LFO4_LIGHT,
 		ENV1_LIGHT,
 		ENV2_LIGHT,
+		LFO1_BP_LIGHT,
+		LFO2_BP_LIGHT,
+		LFO3_BP_LIGHT,
+		LFO4_BP_LIGHT,
+		NOISE_BP_LIGHT,
 		LIGHTS_LEN
 	};
 
 	struct LFO {
 		Quantity* freq;
 		Light* light;
+		Light* bp_light;
 		Output *out, *out2;
 		float phase = 0.f;
 		float freq_value = 4.f;
@@ -81,6 +87,7 @@ struct Busybox : Module {
 			y *= 10; y -= bipolar ? 5.f : 0.f;
 			out->setVoltage(y);
 			out2->setVoltage((bipolar ? 0.f : 10.f) - y);
+			bp_light->setBrightness(bipolar ? 1.f : 0.f);
 		}
 
 		void reset() { phase = 0.f; }
@@ -269,18 +276,21 @@ struct Busybox : Module {
 
 		sawLfo.freq = paramQuantities[LFREQ1_PARAM];
 		sawLfo.light = &lights[LFO1_LIGHT];
+		sawLfo.bp_light = &lights[LFO1_BP_LIGHT];
 		sawLfo.out = &outputs[LFO1_OUTPUT];
 		sawLfo.out2 = &outputs[LFO1INV_OUTPUT];
 		lfos[0] = &sawLfo;
 
 		triangleLfo.freq = paramQuantities[LFREQ2_PARAM];
 		triangleLfo.light = &lights[LFO2_LIGHT];
+		triangleLfo.bp_light = &lights[LFO2_BP_LIGHT];
 		triangleLfo.out = &outputs[LFO2_OUTPUT];
 		triangleLfo.out2 = &outputs[LFO2INV_OUTPUT];
 		lfos[1] = &triangleLfo;
 
 		squareLfo.freq = paramQuantities[LFREQ3_PARAM];
 		squareLfo.light = &lights[LFO3_LIGHT];
+		squareLfo.bp_light = &lights[LFO3_BP_LIGHT];
 		squareLfo.out = &outputs[LFO3_OUTPUT];
 		squareLfo.out2 = &outputs[LFO3INV_OUTPUT];
 		squareLfo.pulseWidth = paramQuantities[LFOPW_PARAM];
@@ -288,6 +298,7 @@ struct Busybox : Module {
 
 		sineLfo.freq = paramQuantities[LFREQ4_PARAM];
 		sineLfo.light = &lights[LFO4_LIGHT];
+		sineLfo.bp_light = &lights[LFO4_BP_LIGHT];
 		sineLfo.out = &outputs[LFO4_OUTPUT];
 		sineLfo.out2 = &outputs[LFO4INV_OUTPUT];
 		lfos[3] = &sineLfo;
@@ -333,6 +344,8 @@ struct Busybox : Module {
 
 		for (std::size_t i=0; i<ADSR_VCA_COUNT; ++i)
 			adsr[i].process(args);
+
+		lights[NOISE_BP_LIGHT].setBrightness(noise_bipolar ? 1.f : 0.f);
 	}
 
 	json_t *dataToJson() override {
@@ -413,6 +426,11 @@ struct BusyboxWidget : ModuleWidget {
 		addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(15.24, 43.93)), module, Busybox::LFO4_LIGHT));
 		addChild(createLightCentered<MediumLight<PurpleLight>>(mm2px(Vec(20.32, 79.49)), module, Busybox::ENV1_LIGHT));
 		addChild(createLightCentered<MediumLight<PurpleLight>>(mm2px(Vec(20.32, 102.35)), module, Busybox::ENV2_LIGHT));
+		addChild(createLightCentered<TinySimpleLight<RedLight>>(mm2px(Vec(30.48, 13.45)), module, Busybox::LFO1_BP_LIGHT));
+		addChild(createLightCentered<TinySimpleLight<YellowLight>>(mm2px(Vec(30.48, 23.61)), module, Busybox::LFO2_BP_LIGHT));
+		addChild(createLightCentered<TinySimpleLight<GreenLight>>(mm2px(Vec(30.48, 33.77)), module, Busybox::LFO3_BP_LIGHT));
+		addChild(createLightCentered<TinySimpleLight<BlueLight>>(mm2px(Vec(30.48, 43.93)), module, Busybox::LFO4_BP_LIGHT));
+		addChild(createLightCentered<TinySimpleLight<PurpleLight>>(mm2px(Vec(30.48, 50.75)), module, Busybox::NOISE_BP_LIGHT));
 	}
 
 	void appendContextMenu(Menu* menu) override {

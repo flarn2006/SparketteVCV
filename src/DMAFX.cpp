@@ -86,6 +86,7 @@ struct DMAFX : DMAExpanderModule<float, bool> {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(SCROLL_AMOUNT_CV_PARAM, -32.f, 32.f, 0.f, "Scroll amount CV");
 		configParam(SCROLL_AMOUNT_PARAM, 0.f, 32.f, 1.f, "Scroll amount");
+		paramQuantities[SCROLL_AMOUNT_PARAM]->snapEnabled = true;
 		configButton(INVERT_PARAM, "Invert");
 		configSwitch(INVERT_MODE_PARAM, 0.f, 1.f, 1.f, "Inversion mode", {"-x", "10-x"});
 		configParam(RAND_MAX_PARAM, -10.f, 10.f, 10.f, "Max random value");

@@ -7,6 +7,7 @@ struct Quadrants : Module {
 		BPOL_PARAM,
 		CPOL_PARAM,
 		DPOL_PARAM,
+		IPOL_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -45,6 +46,7 @@ struct Quadrants : Module {
 		B_LIGHT,
 		C_LIGHT,
 		D_LIGHT,
+		IPOL_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -54,6 +56,7 @@ struct Quadrants : Module {
 		configSwitch(BPOL_PARAM, 0.f, 1.f, 0.f, "Quadrant B XY polarity", {"Unipolar", "Bipolar"});
 		configSwitch(CPOL_PARAM, 0.f, 1.f, 0.f, "Quadrant C XY polarity", {"Unipolar", "Bipolar"});
 		configSwitch(DPOL_PARAM, 0.f, 1.f, 0.f, "Quadrant D XY polarity", {"Unipolar", "Bipolar"});
+		configSwitch(IPOL_PARAM, 0.f, 1.f, 0.f, "Input XY polarity", {"Unipolar", "Bipolar"});
 		configInput(A1_INPUT, "Quadrant A #1");
 		configInput(A2_INPUT, "Quadrant A #2");
 		configInput(A3_INPUT, "Quadrant A #3");
@@ -96,12 +99,17 @@ struct Quadrants : Module {
 		inputs[X_INPUT].readVoltages(x_voltages);
 		inputs[Y_INPUT].readVoltages(y_voltages);
 
-		bool bipolar[4];
-		for (int i=0; i<4; ++i)
+		bool bipolar[5];
+		for (int i=0; i<5; ++i)
 			bipolar[i] = params[APOL_PARAM+i].getValue() > 0.5f;
+		lights[IPOL_LIGHT].setBrightness(bipolar[4] ? 1.f : 0.f);
 
 		int quadrant[PORT_MAX_CHANNELS];
 		for (int i=0; i<xy_nchan; ++i) {
+			if (bipolar[4]) {
+				x_voltages[i] += 5.f;
+				y_voltages[i] += 5.f;
+			}
 			quadrant[i] = (x_voltages[i] >= 5.f) | (y_voltages[i] >= 5.f) << 1;
 			x_voltages[i] *= 2;
 			x_voltages[i] -= 10.f * (x_voltages[i] >= 10.f);
@@ -152,6 +160,7 @@ struct QuadrantsWidget : ModuleWidget {
 		addParam(createParamCentered<CKSS>(mm2px(Vec(36.44, 63.721)), module, Quadrants::BPOL_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(4.2, 74.939)), module, Quadrants::CPOL_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(36.44, 74.939)), module, Quadrants::DPOL_PARAM));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20.32, 69.33)), module, Quadrants::IPOL_PARAM, Quadrants::IPOL_LIGHT));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.321, 18.713)), module, Quadrants::A1_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 18.742)), module, Quadrants::A2_INPUT));

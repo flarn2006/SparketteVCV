@@ -63,6 +63,7 @@ struct Busybox : Module {
 		float phase = 0.f;
 		float freq_value = 4.f;
 		float freq_knob_value = 2.f;
+		bool bipolar = false;
 
 		static constexpr float FREQ_DISPLAY_BASE = 2.f;
 
@@ -77,8 +78,9 @@ struct Busybox : Module {
 			phase = std::fmod(phase + freq_value * args.sampleTime, 1.f);
 			float y = wave(phase);
 			light->setBrightnessSmooth(y, args.sampleTime);
-			out->setVoltage(y * 10);
-			out2->setVoltage(10.f - y * 10);
+			y *= 10; y -= bipolar ? 5.f : 0.f;
+			out->setVoltage(y);
+			out2->setVoltage((bipolar ? 0.f : 10.f) - y);
 		}
 
 		void reset() { phase = 0.f; }
@@ -224,6 +226,9 @@ struct Busybox : Module {
 	static constexpr std::size_t ADSR_VCA_COUNT = 2;
 	ADSR_VCA adsr[ADSR_VCA_COUNT];
 
+	bool noise_bipolar = true;
+	int noise_channels = 1;
+
 	Busybox() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(LFREQ1_PARAM, -3.f, 8.f, 2.f, "LFO 1 Frequency", " Hz", LFO::FREQ_DISPLAY_BASE);
@@ -316,11 +321,43 @@ struct Busybox : Module {
 			lfos[i]->process(args);
 		}
 
-		float r = random::uniform();
-		outputs[NOISE_OUTPUT].setVoltage(10.f * r - 5.f);
+		float noise[PORT_MAX_CHANNELS];
+		if (outputs[NOISE_OUTPUT].isConnected()) {
+			for (int i=0; i<noise_channels; ++i) {
+				float r = random::uniform();
+				noise[i] = 10.f * r - (noise_bipolar ? 5.f : 0.f);
+			}
+			outputs[NOISE_OUTPUT].setChannels(noise_channels);
+			outputs[NOISE_OUTPUT].writeVoltages(noise);
+		}
 
 		for (std::size_t i=0; i<ADSR_VCA_COUNT; ++i)
 			adsr[i].process(args);
+	}
+
+	json_t *dataToJson() override {
+		json_t *root = json_object();
+		json_object_set_new(root, "noise_bipolar", json_boolean(noise_bipolar));
+		json_object_set_new(root, "noise_channels", json_integer(noise_channels));
+		json_t *array = json_array();
+		for (std::size_t i=0; i<LFO_COUNT; ++i)
+			json_array_append_new(array, json_boolean(lfos[i]->bipolar));
+		json_object_set_new(root, "lfo_bipolar", array);
+		return root;
+	}
+
+	void dataFromJson(json_t *root) override {
+		json_t *item = json_object_get(root, "noise_bipolar");
+		if (item)
+			noise_bipolar = json_boolean_value(item);
+		item = json_object_get(root, "noise_channels");
+		if (item)
+			noise_channels = std::min((int)json_integer_value(item), PORT_MAX_CHANNELS);
+		item = json_object_get(root, "lfo_bipolar");
+		if (item) {
+			for (std::size_t i=0; i<LFO_COUNT; ++i)
+				lfos[i]->bipolar = json_boolean_value(json_array_get(item, i));
+		}
 	}
 };
 
@@ -376,6 +413,22 @@ struct BusyboxWidget : ModuleWidget {
 		addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(15.24, 43.93)), module, Busybox::LFO4_LIGHT));
 		addChild(createLightCentered<MediumLight<PurpleLight>>(mm2px(Vec(20.32, 79.49)), module, Busybox::ENV1_LIGHT));
 		addChild(createLightCentered<MediumLight<PurpleLight>>(mm2px(Vec(20.32, 102.35)), module, Busybox::ENV2_LIGHT));
+	}
+
+	void appendContextMenu(Menu* menu) override {
+		auto module = dynamic_cast<Busybox*>(this->module);
+		menu->addChild(new MenuEntry);
+		menu->addChild(createSubmenuItem("Noise channels", string::f("%d", module->noise_channels), [=](Menu *menu) {
+			for (int i=1; i<=PORT_MAX_CHANNELS; ++i) {
+				menu->addChild(createMenuItem(string::f("%d", i), (i==module->noise_channels) ? "<" : "", [=]() {
+					module->noise_channels = i;
+				}));
+			}
+		}));
+		menu->addChild(createMenuLabel("Polarity (check = bipolar)"));
+		for (std::size_t i=0; i<Busybox::LFO_COUNT; ++i)
+			menu->addChild(createBoolPtrMenuItem(string::f("LFO %zu", i+1), "", &module->lfos[i]->bipolar));
+		menu->addChild(createBoolPtrMenuItem("Noise", "", &module->noise_bipolar));
 	}
 };
 

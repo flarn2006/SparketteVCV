@@ -52,12 +52,15 @@ struct Integrator : DMAExpanderModule<float> {
 			if (module->isHostReady()) {
 				nextDMA = module->getDMAHost()->getDMAChannel(0);
 				insert_channel = !nextDMA || nextDMA->height() != 2;
-				if (insert_channel)
-					columns = 1;
-				else
-					columns = nextDMA->width() + 1;
-				count = 2 * columns;
+			} else {
+				nextDMA = nullptr;
+				insert_channel = true;
 			}
+			if (insert_channel)
+				columns = 1;
+			else
+				columns = nextDMA->width() + 1;
+			count = 2 * columns;
 		}
 
 		float read(std::size_t index) const override {
@@ -180,13 +183,19 @@ struct Integrator : DMAExpanderModule<float> {
 	}
 
 	DMAChannel<float> *getDMAChannel(int num) override {
-		dma.update();
-		if (num == 0)
+		if (num == 0) {
 			return &dma;
-		else if (isHostReady())
-			return getDMAHost()->getDMAChannel(num - (dma.insert_channel ? 1 : 0));
-		else
-			return nullptr;
+		} else {
+			DMAHost<float> *host = getDMAHost();
+			if (host)
+				return host->getDMAChannel(num - (dma.insert_channel ? 1 : 0));
+			else
+				return nullptr;
+		}
+	}
+
+	void onDMAHostChange(const DMAHostChangeEvent &e) override {
+		dma.update();
 	}
 };
 

@@ -94,12 +94,23 @@ namespace sparkette {
 	class DMAClient : public DMAHost<T> {
 		DMAHost<T> *host = nullptr;
 
+	public:
+		struct DMAHostChangeEvent {
+			DMAHost<T> *oldHost;
+			DMAHost<T> *newHost;
+		};
+
 	protected:
 		void setDMAHost(DMAHost<T> *newHost) {
-			host = newHost;
+			DMAHostChangeEvent e;
+			e.oldHost = host;
+			host = e.newHost = newHost;
+			onDMAHostChange(e);
 		}
 
 	public:
+		virtual void onDMAHostChange(const DMAHostChangeEvent &e) {}
+
 		DMAHost<T> *getDMAHost() const {
 			return host;
 		}

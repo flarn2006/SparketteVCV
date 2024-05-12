@@ -108,7 +108,7 @@
     {
       "slug": "Integrator",
       "name": "Dual Integrator",
-      "description": "Modulates up to two values over time at variable speed.",
+      "description": "Modulates up to two values over time at variable speed. DMA compatible.",
       "tags": [
         "Dual",
         "Dynamics",

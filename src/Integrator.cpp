@@ -1,9 +1,10 @@
 #include "plugin.hpp"
 #include "Widgets.hpp"
+#include "DMA.hpp"
 
 using namespace sparkette;
 
-struct Integrator : Module {
+struct Integrator : DMAExpanderModule<float> {
 	enum ParamId {
 		MIN_A_PARAM,
 		MAX_A_PARAM,
@@ -36,12 +37,54 @@ struct Integrator : Module {
 		MIN_A_LIGHT,
 		MAX_B_LIGHT,
 		MIN_B_LIGHT,
+		DMA_HOST_LIGHT_G,
+		DMA_HOST_LIGHT_R,
+		DMA_CLIENT_LIGHT,
 		LIGHTS_LEN
+	};
+
+	struct DMA : DMAChannel<float> {
+		Integrator *module = nullptr;
+		DMAChannel<float> *nextDMA = nullptr;
+		bool insert_channel = true;
+		
+		void update() {
+			if (module->isHostReady()) {
+				nextDMA = module->getDMAHost()->getDMAChannel(0);
+				insert_channel = !nextDMA || nextDMA->height() != 2;
+				if (insert_channel)
+					columns = 1;
+				else
+					columns = nextDMA->width() + 1;
+				count = 2 * columns;
+			}
+		}
+
+		float read(std::size_t index) const override {
+			std::size_t col = index % columns;
+			std::size_t row = index / columns;
+			if (col == 0)
+				return module->values[row];
+			else if (nextDMA)
+				return nextDMA->read(col-1, row);
+			else
+				return 0.f;
+		}
+
+		void write(std::size_t index, float value) override {
+			std::size_t col = index % columns;
+			std::size_t row = index / columns;
+			if (col == 0)
+				module->values[row] = value;
+			else if (nextDMA)
+				nextDMA->write(col-1, row, value);
+		}
 	};
 
 	dsp::SchmittTrigger reset_triggers[2];
 	float values[2];
 	bool wraparound = false;
+	mutable DMA dma;
 
 	Integrator() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -64,6 +107,9 @@ struct Integrator : Module {
 		configOutput(OUT_A_OUTPUT, "Output A");
 		configOutput(OUT_B_OUTPUT, "Output B");
 		values[0] = values[1] = 0.f;
+		dma.module = this;
+		dmaHostLightID = DMA_HOST_LIGHT_G;
+		dmaClientLightID = DMA_CLIENT_LIGHT;
 	}
 
 	void processOne(const ProcessArgs& args, ParamId min, ParamId max, ParamId deltaScale, ParamId dsr, ParamId reset_button, InputId delta, InputId gate, InputId reset, OutputId output, LightId max_light, LightId min_light, std::size_t array_index) {
@@ -102,8 +148,14 @@ struct Integrator : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
+		DMAExpanderModule<float>::process(args);
+		dma.update();
 		processOne(args, MIN_A_PARAM, MAX_A_PARAM, DELTA_SCALE_A_PARAM, DELTA_SCALE_RANGE_A_PARAM, RESET_A_PARAM, DELTA_A_INPUT, GATE_A_INPUT, RESET_A_INPUT, OUT_A_OUTPUT, MAX_A_LIGHT, MIN_A_LIGHT, 0);
 		processOne(args, MIN_B_PARAM, MAX_B_PARAM, DELTA_SCALE_B_PARAM, DELTA_SCALE_RANGE_B_PARAM, RESET_B_PARAM, DELTA_B_INPUT, GATE_B_INPUT, RESET_B_INPUT, OUT_B_OUTPUT, MAX_B_LIGHT, MIN_B_LIGHT, 1);
+	}
+
+	bool readyForDMA() const override {
+		return true;
 	}
 
 	json_t* dataToJson() override {
@@ -116,6 +168,25 @@ struct Integrator : Module {
 		json_t* item = json_object_get(root, "wraparound");
 		if (item)
 			wraparound = json_boolean_value(item);
+	}
+
+	int getDMAChannelCount() const override {
+		if (isHostReady()) {
+			int host_nchan = getDMAHost()->getDMAChannelCount();
+			return host_nchan + (dma.insert_channel ? 1 : 0);
+		} else {
+			return 1;
+		}
+	}
+
+	DMAChannel<float> *getDMAChannel(int num) override {
+		dma.update();
+		if (num == 0)
+			return &dma;
+		else if (isHostReady())
+			return getDMAHost()->getDMAChannel(num - (dma.insert_channel ? 1 : 0));
+		else
+			return nullptr;
 	}
 };
 
@@ -157,6 +228,8 @@ struct IntegratorWidget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 22.595)), module, Integrator::MIN_A_LIGHT));
 		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(15.24, 75.321)), module, Integrator::MAX_B_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 79.321)), module, Integrator::MIN_B_LIGHT));
+		addChild(createLightCentered<SmallLight<BlueLight>>(Vec(8.0, 8.0), module, Integrator::DMA_CLIENT_LIGHT));
+		addChild(createLightCentered<SmallLight<GreenRedLight>>(Vec(box.size.x - 8.0, 8.0), module, Integrator::DMA_HOST_LIGHT_G));
 
 		value_text[0] = createWidget<GlowingWidget<Label>>(mm2px(Vec(0.712, 58.08)));
 		value_text[1] = createWidget<GlowingWidget<Label>>(mm2px(Vec(0.712, 114.806)));

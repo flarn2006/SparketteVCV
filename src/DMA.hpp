@@ -52,11 +52,17 @@ namespace sparkette {
 		}
 		
 		std::size_t width() const {
-			return columns;
+			if (columns == 0)
+				return count;
+			else
+				return columns;
 		}
 
 		std::size_t height() const {
-			return count / columns;
+			if (columns == 0)
+				return 1;
+			else
+				return count / columns;
 		}
 
 		accessor operator[](std::size_t index) {
@@ -137,7 +143,7 @@ namespace sparkette {
 	}
 
 	template <typename TModule, template <typename> typename TTemplate, typename TFirst, typename... TRest>
-	inline int checkMultiDMAChannels(TModule *module, int scratch = 0) {
+	inline int checkMultiDMAChannels(const TModule *module, int scratch = 0) {
 		int n = std::max(scratch, module->TTemplate<TFirst>::getDMAChannelCount());
 		if constexpr (sizeof...(TRest) == 0)
 			return n;
@@ -210,7 +216,7 @@ namespace sparkette {
 			}
 		}
 
-		int getDMAChannelCount() {
+		int getDMAChannelCount() /* NOT const, NOT override */ {
 			return checkMultiDMAChannels<DMAExpanderModule<T...>, DMAClient, T...>(this);
 		}
 

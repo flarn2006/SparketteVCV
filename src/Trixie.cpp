@@ -22,6 +22,10 @@ struct Trixie : Module {
 
 	float phase = 0.f;
 
+	void onReset(const ResetEvent &e) override {
+		phase = 0.f;
+	}
+
 	void process(const ProcessArgs& args) override {
 		phase += args.sampleTime;
 		while (phase > 1.f)

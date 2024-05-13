@@ -10,6 +10,7 @@ void init(Plugin* p) {
 	// Add modules here
 	// p->addModel(modelMyModule);
 	p->addModel(modelEllie);
+	p->addModel(modelTrixie);
 	p->addModel(modelNoteClassifier);
 	p->addModel(modelPolyRepeater);
 	p->addModel(modelPolySelector);

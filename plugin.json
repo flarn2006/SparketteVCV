@@ -189,6 +189,14 @@
       "tags": [
         "Expander"
       ]
+    },
+    {
+      "slug": "Trixie",
+      "name": "Trixie",
+      "description": "Trixie joins Ellie as a blank panel",
+      "tags": [
+        "Blank"
+      ]
     }
   ]
 }

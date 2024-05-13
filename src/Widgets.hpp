@@ -6,7 +6,9 @@ namespace sparkette {
 template <typename TWidget>
 struct GlowingWidget : TWidget {
 	void drawLayer(const typename TWidget::DrawArgs& args, int layer) override {
-		static_cast<TWidget*>(this)->draw(args);
+		if (layer == 1)
+			static_cast<TWidget*>(this)->draw(args);
+		TWidget::drawLayer(args, layer);
 	}
 };
 

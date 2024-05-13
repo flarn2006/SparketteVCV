@@ -243,7 +243,8 @@ struct IntegratorWidget : ModuleWidget {
 		value_text[0] = createWidget<GlowingWidget<Label>>(mm2px(Vec(0.712, 58.08)));
 		value_text[1] = createWidget<GlowingWidget<Label>>(mm2px(Vec(0.712, 114.806)));
 		for (int i=0; i<2; ++i) {
-			value_text[i]->box.size = mm2px(Vec(18.521, 7.65));
+			value_text[i]->text = "#.###";
+			value_text[i]->box.size = mm2px(Vec(20.0, 7.65));
 			value_text[i]->color = componentlibrary::SCHEME_GREEN;
 			value_text[i]->fontSize = 13.f;
 			value_text[i]->lineHeight = 20.f;
@@ -256,7 +257,7 @@ struct IntegratorWidget : ModuleWidget {
 		if (module == nullptr) return;
 		auto m = dynamic_cast<Integrator*>(module);
 		for (int i=0; i<2; ++i)
-			value_text[i]->text = string::f("%0.3f", m->values[i]);
+			value_text[i]->text = string::f("%0.3f", m->values[i]).substr(0, 6);
 	}
 
 	void appendContextMenu(Menu* menu) override {

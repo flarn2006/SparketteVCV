@@ -82,9 +82,9 @@ struct Integrator : DMAExpanderModule<float> {
 		void write(std::size_t index, float value) override {
 			std::size_t col = index % columns;
 			std::size_t row = index / columns;
-			if (col == 0)
+			if (col == 0 && row < 2)
 				module->values[row] = value;
-			else if (nextDMA && nextDMA->getOwner()->readyForDMA())
+			else if (col > 0 && nextDMA && nextDMA->getOwner()->readyForDMA())
 				nextDMA->write(col-1, row, value);
 		}
 	};

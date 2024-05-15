@@ -440,7 +440,7 @@ struct RAM40964Widget : ModuleWidget {
 		addParam(createParamCentered<CKSS>(mm2px(Vec(98.01, 40.332)), module, RAM40964::WRITE_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(63.5, 11.786)), module, RAM40964::MONITOR_PARAM));
 		addParam(createParamCentered<CKSSWithLine>(mm2px(Vec(82.2, 10.6275)), module, RAM40964::PHASOR_TO_ADDR_PARAM));
-		addParam(createParamCentered<CKSSMomentary>(mm2px(Vec(102.65, 40.332)), module, RAM40964::CLEAR_PARAM));
+		addParam(createParamCentered<MomentaryVariant<CKSS>>(mm2px(Vec(102.65, 40.332)), module, RAM40964::CLEAR_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 59.276)), module, RAM40964::WRITE0_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 71.976)), module, RAM40964::WRITE1_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 84.676)), module, RAM40964::WRITE2_PARAM));

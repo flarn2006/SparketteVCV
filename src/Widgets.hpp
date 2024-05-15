@@ -41,8 +41,11 @@ struct CKSSWithLine : app::SvgSwitch {
 	CKSSWithLine();
 };
 
-struct CKSSMomentary : CKSS {
-	CKSSMomentary();
+template <typename TSwitch, bool Momentary = true>
+struct MomentaryVariant : TSwitch {
+	MomentaryVariant() {
+		this->momentary = Momentary;
+	}
 };
 
 }

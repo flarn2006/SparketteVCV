@@ -65,8 +65,4 @@ CKSSWithLine::CKSSWithLine() {
 	addFrame(Svg::load(asset::plugin(pluginInstance, "res/CKSS_1_line.svg")));
 }
 
-CKSSMomentary::CKSSMomentary() {
-	momentary = true;
-}
-
 }

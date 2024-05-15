@@ -88,7 +88,7 @@ namespace sparkette {
 					x += (int)(x_array[i] / 10 * matrix_width);
 				addresses[i] = matrix_width * y + x;
 			} else if (i < x_nchan) {
-				x += (int)(x_array[i] / 10 * (matrix_width*matrix_height-1));
+				x += (int)(x_array[i] / 10 * (matrix_width*matrix_height));
 				addresses[i] = matrix_width * y + x;
 			} else if (i > 0) {
 				addresses[i] = (addresses[i-1] + poly_increment) % (matrix_width*matrix_height);

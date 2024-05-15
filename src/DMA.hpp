@@ -3,14 +3,36 @@
 #include <set>
 
 namespace sparkette {
+
+	template <typename T>
+	class DMAChannel;
+
+	template <typename T>
+	struct DMAWriteEvent {
+		DMAChannel<T> *channel;
+		std::size_t index;
+	};
+
+	template <typename T>
+	class DMAHost;
 	
 	template <typename T>
 	class DMAChannel {
 	protected:
 		T *mem_start = nullptr;
+		DMAHost<T> *owner = nullptr;
 		std::size_t count = 0;
 		std::size_t stride = 1;
 		std::size_t columns = 1;
+
+		void signalDMAWrite(std::size_t index) {
+			if (owner) {
+				DMAWriteEvent<T> e;
+				e.channel = this;
+				e.index = index;
+				owner->onDMAWrite(e);
+			}
+		}
 
 	public:
 		class accessor {
@@ -25,9 +47,22 @@ namespace sparkette {
 			}
 		};
 
+		void setup(DMAHost<T> *owner, std::size_t count, T *mem_start = nullptr, std::size_t stride = 1) {
+			this->owner = owner;
+			this->count = count;
+			this->mem_start = mem_start;
+			this->stride = stride;
+			columns = 1;
+		}
+
+		void setup(DMAHost<T> *owner, std::size_t width, std::size_t height, T *mem_start = nullptr, std::size_t stride = 1) {
+			setup(owner, width * height, mem_start, stride);
+			columns = width;
+		}
+
 		DMAChannel() = default;
-		DMAChannel(T *mem_start, std::size_t count, std::size_t columns = 1, std::size_t stride = 1)
-			: mem_start(mem_start), count(count), stride(stride), columns(columns) {}
+		DMAChannel(DMAHost<T> *owner, T *mem_start, std::size_t count, std::size_t columns = 1, std::size_t stride = 1)
+			: owner(owner), mem_start(mem_start), count(count), stride(stride), columns(columns) {}
 		DMAChannel(const DMAChannel& other) = delete;
 		DMAChannel& operator=(const DMAChannel& other) = delete;
 
@@ -41,6 +76,7 @@ namespace sparkette {
 
 		virtual void write(std::size_t index, T value) {
 			mem_start[index * stride] = value;
+			signalDMAWrite(index);
 		}
 
 		void write(std::size_t col, std::size_t row, T value) {
@@ -63,6 +99,10 @@ namespace sparkette {
 				return 1;
 			else
 				return count / columns;
+		}
+
+		DMAHost<T> *getOwner() const {
+			return owner;
 		}
 
 		accessor operator[](std::size_t index) {
@@ -88,6 +128,7 @@ namespace sparkette {
 		virtual bool readyForDMA() const {
 			return true;
 		}
+		virtual void onDMAWrite(const DMAWriteEvent<T> &e) {}
 	};
 
 	template <typename T>

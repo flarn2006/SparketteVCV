@@ -44,9 +44,10 @@ struct Microcosm : DMAHostModule<bool> {
 
 	struct DMA : DMAChannel<bool> {
 		std::bitset<CELL_COUNT> &bitset;
-		DMA(std::bitset<CELL_COUNT> &bitset) : bitset(bitset) {
+		DMA(std::bitset<CELL_COUNT> &bitset, DMAHost<bool> *owner) : bitset(bitset) {
 			columns = GRID_WIDTH;
 			count = CELL_COUNT;
+			this->owner = owner;
 		}
 
 		bool read(std::size_t index) const override {
@@ -60,7 +61,7 @@ struct Microcosm : DMAHostModule<bool> {
 
 	DMA fieldDMA, savedDMA;
 
-	Microcosm() : fieldDMA(field), savedDMA(saved) {
+	Microcosm() : fieldDMA(field, this), savedDMA(saved, this) {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configSwitch(CLOCK_ENABLE_PARAM, 0.f, 1.f, 1.f, "Clock", {"Disabled", "Enabled"});
 		configParam(SAVE_PARAM, 0.f, 1.f, 0.f, "Save");

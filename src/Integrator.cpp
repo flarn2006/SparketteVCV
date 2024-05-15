@@ -47,6 +47,11 @@ struct Integrator : DMAExpanderModule<float> {
 		Integrator *module = nullptr;
 		DMAChannel<float> *nextDMA = nullptr;
 		bool insert_channel = true;
+
+		DMA(Integrator *module) {
+			this->module = module;
+			owner = module;
+		}
 		
 		void update() {
 			if (module->isHostReady()) {
@@ -79,7 +84,7 @@ struct Integrator : DMAExpanderModule<float> {
 			std::size_t row = index / columns;
 			if (col == 0)
 				module->values[row] = value;
-			else if (nextDMA)
+			else if (nextDMA && nextDMA->getOwner()->readyForDMA())
 				nextDMA->write(col-1, row, value);
 		}
 	};
@@ -89,7 +94,7 @@ struct Integrator : DMAExpanderModule<float> {
 	bool wraparound = false;
 	mutable DMA dma;
 
-	Integrator() {
+	Integrator() : dma(this) {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(MIN_A_PARAM, -10.f, 10.f, -10.f, "Min Value A");
 		configParam(MAX_A_PARAM, -10.f, 10.f, 10.f, "Max Value A");

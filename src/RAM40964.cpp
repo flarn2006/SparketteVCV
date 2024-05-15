@@ -74,18 +74,6 @@ struct RAM40964 : DMAHostModule<float> {
 		LIGHTS_LEN
 	};
 
-	struct DMA : DMAChannel<float> {
-		friend class RAM40964;
-		RAM40964 *module = nullptr;
-		void write(std::size_t index, float value) override {
-			DMAChannel<float>::write(index, value);
-			if (module) {
-				module->data_dirty = true;
-				module->dma_write_led_pulse.trigger();
-			}
-		}
-	};
-
 	float data[MATRIX_WIDTH*MATRIX_HEIGHT][PLANE_COUNT];
 	int dispmode = 0;
 	float brightness = 0.5f;
@@ -93,7 +81,7 @@ struct RAM40964 : DMAHostModule<float> {
 	bool fade_lights = true;
 	float fade_sampleTime = 0.f;
 	bool data_dirty = false;
-	DMA dma[PLANE_COUNT];
+	DMAChannel<float> dma[PLANE_COUNT];
 	dsp::PulseGenerator dma_write_led_pulse;
 	bool save_memory = false;
 
@@ -132,15 +120,15 @@ struct RAM40964 : DMAHostModule<float> {
 		paramQuantities[Y_PARAM]->snapEnabled = true;
 		clearData();
 
-		for (int i=0; i<PLANE_COUNT; ++i) {
-			dma[i].mem_start = &data[0][i];
-			dma[i].count = MATRIX_WIDTH*MATRIX_HEIGHT;
-			dma[i].stride = PLANE_COUNT;
-			dma[i].columns = MATRIX_WIDTH;
-			dma[i].module = this;
-		}
+		for (int i=0; i<PLANE_COUNT; ++i)
+			dma[i].setup(this, MATRIX_WIDTH, MATRIX_HEIGHT, &data[0][i], PLANE_COUNT);
 
 		dmaClientLightID = DMA_LIGHT_G;
+	}
+
+	void onDMAWrite(const DMAWriteEvent<float> &e) override {
+		data_dirty = true;
+		dma_write_led_pulse.trigger();
 	}
 
 	void clearData() {

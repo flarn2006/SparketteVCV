@@ -41,4 +41,8 @@ struct CKSSWithLine : app::SvgSwitch {
 	CKSSWithLine();
 };
 
+struct CKSSMomentary : CKSS {
+	CKSSMomentary();
+};
+
 }

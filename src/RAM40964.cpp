@@ -26,6 +26,7 @@ struct RAM40964 : DMAHostModule<float> {
 		BRIGHTNESS_PARAM,
 		WRITE_PARAM,
 		PHASOR_TO_ADDR_PARAM,
+		CLEAR_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -99,6 +100,7 @@ struct RAM40964 : DMAHostModule<float> {
 		configSwitch(WRITE_PARAM, 0.f, 1.f, 0.f, "Write", {"when gate active", "always"});
 		configSwitch(MONITOR_PARAM, 0.f, 1.f, 1.f, "Data monitor", {"Read", "Write"});
 		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 0.f, "Phasor as write address", {"Off", "On"});
+		configButton(CLEAR_PARAM, "Clear memory");
 		configInput(X_INPUT, "X address (read)");
 		configInput(Y_INPUT, "Y address (read)");
 		configInput(CLEAR_INPUT, "Clear trigger");
@@ -215,7 +217,7 @@ struct RAM40964 : DMAHostModule<float> {
 		brightness = params[BRIGHTNESS_PARAM].getValue();
 
 		// Clear data on trigger
-		if (clear_trigger.process(inputs[CLEAR_INPUT].getVoltage())) {
+		if (clear_trigger.process(inputs[CLEAR_INPUT].getVoltage()) || params[CLEAR_PARAM].getValue() > 0.5f) {
 			clearData();
 			data_dirty = true;
 		}
@@ -412,9 +414,10 @@ struct RAM40964Widget : ModuleWidget {
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(100.538, 109.576)), module, RAM40964::INCREMENT_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(106.008, 109.576)), module, RAM40964::DISPMODE_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(88.9, 107.43)), module, RAM40964::BRIGHTNESS_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(98.16, 40.332)), module, RAM40964::WRITE_PARAM));
+		addParam(createParamCentered<CKSS>(mm2px(Vec(98.01, 40.332)), module, RAM40964::WRITE_PARAM));
 		addParam(createParamCentered<CKSS>(mm2px(Vec(63.5, 11.786)), module, RAM40964::MONITOR_PARAM));
 		addParam(createParamCentered<CKSSWithLine>(mm2px(Vec(82.2, 10.6275)), module, RAM40964::PHASOR_TO_ADDR_PARAM));
+		addParam(createParamCentered<CKSSMomentary>(mm2px(Vec(102.65, 40.332)), module, RAM40964::CLEAR_PARAM));
 
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 10.91)), module, RAM40964::X_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 23.61)), module, RAM40964::Y_INPUT));
@@ -457,13 +460,6 @@ struct RAM40964Widget : ModuleWidget {
 	void appendContextMenu(Menu* menu) override {
 		auto module = dynamic_cast<RAM40964*>(this->module);
 		menu->addChild(new MenuEntry);
-
-		auto item = createMenuItem("Clear memory", "", [module]() {
-			module->clearData();
-			module->updateDataLights(0.f);
-		});
-		menu->addChild(item);
-
 		menu->addChild(createBoolPtrMenuItem("Fade lights", "", &module->fade_lights));
 		menu->addChild(createBoolPtrMenuItem("Save memory contents", "", &module->save_memory));
 	}

@@ -92,7 +92,7 @@ struct Integrator : DMAExpanderModule<float> {
 	dsp::SchmittTrigger reset_triggers[2];
 	float values[2];
 	bool wraparound = false;
-	mutable DMA dma;
+	DMA dma;
 
 	Integrator() : dma(this) {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);

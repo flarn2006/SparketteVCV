@@ -16,7 +16,7 @@ bool convertDataInput<bool>(float voltage) {
 
 template <typename T>
 static float convertForDataLight(T value) {
-	return static_cast<float>(value);
+	return static_cast<float>(value / 10);
 }
 
 template <>

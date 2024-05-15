@@ -27,6 +27,10 @@ struct RAM40964 : DMAHostModule<float> {
 		WRITE_PARAM,
 		PHASOR_TO_ADDR_PARAM,
 		CLEAR_PARAM,
+		WRITE0_PARAM,
+		WRITE1_PARAM,
+		WRITE2_PARAM,
+		WRITE3_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -75,6 +79,14 @@ struct RAM40964 : DMAHostModule<float> {
 		LIGHTS_LEN
 	};
 
+	struct DMA : DMAChannel<float> {
+		bool write_enable = true;
+		void write(std::size_t index, float value) override {
+			if (write_enable)
+				DMAChannel<float>::write(index, value);
+		}
+	};
+
 	float data[MATRIX_WIDTH*MATRIX_HEIGHT][PLANE_COUNT];
 	int dispmode = 0;
 	float brightness = 0.5f;
@@ -82,7 +94,7 @@ struct RAM40964 : DMAHostModule<float> {
 	bool fade_lights = true;
 	float fade_sampleTime = 0.f;
 	bool data_dirty = false;
-	DMAChannel<float> dma[PLANE_COUNT];
+	DMA dma[PLANE_COUNT];
 	dsp::PulseGenerator dma_write_led_pulse;
 	bool save_memory = false;
 
@@ -101,6 +113,8 @@ struct RAM40964 : DMAHostModule<float> {
 		configSwitch(MONITOR_PARAM, 0.f, 1.f, 1.f, "Data monitor", {"Read", "Write"});
 		configSwitch(PHASOR_TO_ADDR_PARAM, 0.f, 1.f, 0.f, "Phasor as write address", {"Off", "On"});
 		configButton(CLEAR_PARAM, "Clear memory");
+		for (int i=0; i<PLANE_COUNT; ++i)
+			configSwitch(WRITE0_PARAM+i, 0.f, 2.f, 2.f, string::f("Plane %d write enable", i), {"Read-only", "Write via DMA", "Read/write"});
 		configInput(X_INPUT, "X address (read)");
 		configInput(Y_INPUT, "Y address (read)");
 		configInput(CLEAR_INPUT, "Clear trigger");
@@ -173,6 +187,13 @@ struct RAM40964 : DMAHostModule<float> {
 	}
 
 	void process(const ProcessArgs& args) override {
+		bool plane_write_enable[PLANE_COUNT];
+		for (int i=0; i<PLANE_COUNT; ++i) {
+			float p = params[WRITE0_PARAM+i].getValue();
+			dma[i].write_enable = p > 0.5f;
+			plane_write_enable[i] = p > 1.5f;
+		}
+			
 		// Process phasor input/outputs
 		int phasor_nchan = inputs[PHASOR_INPUT].getChannels();
 		float phasor_voltages[PORT_MAX_CHANNELS];
@@ -283,6 +304,8 @@ struct RAM40964 : DMAHostModule<float> {
 				if (write_gates[i] > 0.5f || write_all) {
 					wrote_some = true;
 					for (int j=0; j<PLANE_COUNT; ++j) {
+						if (!plane_write_enable[j])
+							continue;
 						if (i < planes_nchan[j])
 							plane_lastval[j] = to_write[j][i] * params[DATA0_PARAM+j].getValue();
 						data[addresses_w[i]][j] = plane_lastval[j];
@@ -407,10 +430,10 @@ struct RAM40964Widget : ModuleWidget {
 
 		addParam(createParamCentered<Rogan1PYellow>(mm2px(Vec(7.62, 10.91)), module, RAM40964::X_PARAM));
 		addParam(createParamCentered<Rogan1PPurple>(mm2px(Vec(7.62, 23.61)), module, RAM40964::Y_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 60.816)), module, RAM40964::DATA0_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 73.516)), module, RAM40964::DATA1_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 86.216)), module, RAM40964::DATA2_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(99.772, 98.916)), module, RAM40964::DATA3_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(97.655, 60.816)), module, RAM40964::DATA0_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(97.655, 73.516)), module, RAM40964::DATA1_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(97.655, 86.216)), module, RAM40964::DATA2_PARAM));
+		addParam(createParamCentered<Trimpot>(mm2px(Vec(97.655, 98.916)), module, RAM40964::DATA3_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(100.538, 109.576)), module, RAM40964::INCREMENT_PARAM));
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(106.008, 109.576)), module, RAM40964::DISPMODE_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(88.9, 107.43)), module, RAM40964::BRIGHTNESS_PARAM));
@@ -418,23 +441,27 @@ struct RAM40964Widget : ModuleWidget {
 		addParam(createParamCentered<CKSS>(mm2px(Vec(63.5, 11.786)), module, RAM40964::MONITOR_PARAM));
 		addParam(createParamCentered<CKSSWithLine>(mm2px(Vec(82.2, 10.6275)), module, RAM40964::PHASOR_TO_ADDR_PARAM));
 		addParam(createParamCentered<CKSSMomentary>(mm2px(Vec(102.65, 40.332)), module, RAM40964::CLEAR_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 59.276)), module, RAM40964::WRITE0_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 71.976)), module, RAM40964::WRITE1_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 84.676)), module, RAM40964::WRITE2_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(114.1, 97.376)), module, RAM40964::WRITE3_PARAM));
 
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 10.91)), module, RAM40964::X_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(109.22, 23.61)), module, RAM40964::Y_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(91.44, 40.332)), module, RAM40964::WRITE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(109.22, 40.332)), module, RAM40964::CLEAR_INPUT));
-		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(91.44, 59.276)), module, RAM40964::DATA0_INPUT));
-		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(91.44, 71.976)), module, RAM40964::DATA1_INPUT));
-		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(91.44, 84.676)), module, RAM40964::DATA2_INPUT));
-		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(91.652, 97.376)), module, RAM40964::DATA3_INPUT));
+		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(89.323, 59.276)), module, RAM40964::DATA0_INPUT));
+		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(89.323, 71.976)), module, RAM40964::DATA1_INPUT));
+		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(89.323, 84.676)), module, RAM40964::DATA2_INPUT));
+		addInput(createInputCentered<PJ3410Port>(mm2px(Vec(89.323, 97.376)), module, RAM40964::DATA3_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(91.44, 10.91)), module, RAM40964::XW_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(91.44, 23.61)), module, RAM40964::YW_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(74.718, 10.91)), module, RAM40964::PHASOR_INPUT));
 
-		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(109.22, 59.276)), module, RAM40964::DATA0_OUTPUT));
-		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(109.22, 71.976)), module, RAM40964::DATA1_OUTPUT));
-		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(109.22, 84.676)), module, RAM40964::DATA2_OUTPUT));
-		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(109.432, 97.376)), module, RAM40964::DATA3_OUTPUT));
+		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(106.8, 59.276)), module, RAM40964::DATA0_OUTPUT));
+		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(106.8, 71.976)), module, RAM40964::DATA1_OUTPUT));
+		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(106.8, 84.676)), module, RAM40964::DATA2_OUTPUT));
+		addOutput(createOutputCentered<PJ3410Port>(mm2px(Vec(106.8, 97.376)), module, RAM40964::DATA3_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(69.638, 23.61)), module, RAM40964::X_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.798, 23.61)), module, RAM40964::Y_OUTPUT));
 
@@ -446,10 +473,10 @@ struct RAM40964Widget : ModuleWidget {
 			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 22.5)), module, RAM40964::CH_PLANE3_LIGHTS_G+2*i));
 			addChild(createLightCentered<SmallLight<GreenRedLight>>(mm2px(Vec(x, 27.5)), module, RAM40964::CH_RW_LIGHTS_G+2*i));
 		}
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(102.388, 56.236)), module, RAM40964::DATA0_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(102.388, 68.936)), module, RAM40964::DATA1_LIGHT));
-		addChild(createLightCentered<MediumLight<BlueLight>>(mm2px(Vec(102.388, 81.636)), module, RAM40964::DATA2_LIGHT));
-		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(102.388, 94.336)), module, RAM40964::DATA3_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(100.271, 56.236)), module, RAM40964::DATA0_LIGHT));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(100.271, 68.936)), module, RAM40964::DATA1_LIGHT));
+		addChild(createLightCentered<MediumLight<BlueLight>>(mm2px(Vec(100.271, 81.636)), module, RAM40964::DATA2_LIGHT));
+		addChild(createLightCentered<MediumLight<YellowLight>>(mm2px(Vec(100.271, 94.336)), module, RAM40964::DATA3_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(98.66, 47.0)), module, RAM40964::WRITE_LIGHT));
 		addChild(createLightCentered<SmallLight<GreenRedLight>>(Vec(8.0, 8.0), module, RAM40964::DMA_LIGHT_G));
 		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(82.2, 5.5)), module, RAM40964::PHASOR_ADDR_LIGHT));

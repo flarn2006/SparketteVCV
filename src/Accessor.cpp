@@ -53,12 +53,14 @@ struct Accessor : DMAExpanderModule<float, bool> {
 		LIGHTS_LEN
 	};
 
+	dsp::SchmittTrigger write_triggers[PORT_MAX_CHANNELS];
+
 	Accessor() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(CHANNEL_PARAM, 0.f, 16.f, 0.f, "DMA channel");
 		paramQuantities[CHANNEL_PARAM]->snapEnabled = true;
 		configParam(DATA_PARAM, -10.f, 10.f, 10.f, "Data");
-		configSwitch(WRITE_PARAM, 0.f, 1.f, 0.f, "Write", {"when gate active", "always"});
+		configSwitch(WRITE_PARAM, 0.f, 2.f, 0.f, "Write", {"when gate active", "always", "on trigger"});
 		configInput(X_INPUT, "X address");
 		configInput(Y_INPUT, "Y address");
 		configInput(DATA_INPUT, "Data");
@@ -70,8 +72,24 @@ struct Accessor : DMAExpanderModule<float, bool> {
 
 	template <typename T>
 	void processType(const ProcessArgs &args, DMAChannel<T> &dma, int addr_count, const int *addresses, int write_nchan, const float *write_voltages, int data_nchan, const float *data_voltages) {
-		bool write_all = params[WRITE_PARAM].getValue() > 0.5f;
-		if (write_all || (write_nchan == 1 && write_voltages[0] > 0.5f)) {
+		int write_mode = (int)params[WRITE_PARAM].getValue();
+		bool write_all = (write_mode == 1);
+		bool write_channels[PORT_MAX_CHANNELS];
+		for (int i=0; i<write_nchan; ++i) {
+			switch (write_mode) {
+				case 0:
+					write_channels[i] = write_voltages[i] > 0.5f;
+					break;
+				case 1:
+					write_channels[i] = true;
+					break;
+				case 2:
+					write_channels[i] = write_triggers[i].process(write_voltages[i]);
+					break;
+			}
+		}
+
+		if (write_all || (write_nchan == 1 && write_channels[0])) {
 			write_nchan = addr_count;
 			write_all = true;
 		}
@@ -80,7 +98,7 @@ struct Accessor : DMAExpanderModule<float, bool> {
 		T data_in = convertDataInput<T>(data_scale);
 		data_scale /= 10;
 		for (int i=0; i<write_nchan; ++i) {
-			if (write_all || write_voltages[i] > 0.5f) {
+			if (write_all || write_channels[i]) {
 				if (i < data_nchan)
 					data_in = convertDataInput<T>(data_voltages[i] * data_scale);
 				dma[addresses[i]] = data_in;
@@ -178,7 +196,7 @@ struct AccessorWidget : ModuleWidget {
 
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 10.45)), module, Accessor::CHANNEL_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(11.971, 64.991)), module, Accessor::DATA_PARAM));
-		addParam(createParamCentered<CKSS>(mm2px(Vec(11.689, 86.475)), module, Accessor::WRITE_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(11.689, 86.475)), module, Accessor::WRITE_PARAM));
 
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(7.62, 29.219)), module, Accessor::X_INPUT));
 		addInput(createInputCentered<CL1362Port>(mm2px(Vec(7.62, 40.861)), module, Accessor::Y_INPUT));

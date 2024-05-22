@@ -93,10 +93,10 @@ struct NoteClassifier : Module {
 			}
 		}
 
-		lights[LENABLE_LIGHT].setBrightness(ignoreGate && nchan > 1 ? 0.5f : enable_light_brightness);
+		lights[LENABLE_LIGHT].setBrightnessSmooth(ignoreGate && nchan > 1 ? 0.5f : enable_light_brightness, args.sampleTime);
 
 		for (int i=0; i<NOTE_COUNT; ++i) {
-			lights[note_lights[i]].setBrightness(note_states[i] ? (note_states[i] == 3 ? 1.0f : 0.3f) : 0.0f);
+			lights[note_lights[i]].setBrightnessSmooth(note_states[i] ? (note_states[i] == 3 ? 1.0f : 0.3f) : 0.0f, args.sampleTime);
 			outputs[note_outputs[i]].setVoltage(note_states[i] == 3 ? 10.0f : 0.0f);
 		}
 	}

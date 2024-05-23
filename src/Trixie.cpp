@@ -50,28 +50,30 @@ struct TrixieWidget : ModuleWidget {
 	}
 
 	void drawLayer(const DrawArgs &args, int layer) override {
-		if (pPhase && layer == 1) {
+		if (pPhase && layer == 1 && module) {
+			double left = (module->leftExpander.module && module->leftExpander.module->model == modelEllie) ? -RACK_GRID_WIDTH*8 : 0.0;
+			double right = box.size.x + ((module->rightExpander.module && module->rightExpander.module->model == modelEllie) ? RACK_GRID_WIDTH*8 : 0.0);
 			float sine = std::sin(*pPhase * M_PI) + 1.f / 2;
 			double aura_width = 7.0 - (double)sine * 2;
 			nvgFillColor(args.vg, nvgRGBA(0x51, 0xff, 0xff, 0x60 + (int)(sine * 0x60)));
 
 			nvgBeginPath(args.vg);
-			nvgRect(args.vg, -aura_width, -aura_width, box.size.x+2*aura_width, aura_width);
+			nvgRect(args.vg, left-aura_width, -aura_width, right-left+2*aura_width, aura_width);
 			nvgFill(args.vg);
 			nvgClosePath(args.vg);
 
 			nvgBeginPath(args.vg);
-			nvgRect(args.vg, -aura_width, box.size.y, box.size.x+2*aura_width, aura_width);
+			nvgRect(args.vg, left-aura_width, box.size.y, right-left+2*aura_width, aura_width);
 			nvgFill(args.vg);
 			nvgClosePath(args.vg);
 
 			nvgBeginPath(args.vg);
-			nvgRect(args.vg, -aura_width, 0.0, aura_width, box.size.y);
+			nvgRect(args.vg, left-aura_width, 0.0, aura_width, box.size.y);
 			nvgFill(args.vg);
 			nvgClosePath(args.vg);
 
 			nvgBeginPath(args.vg);
-			nvgRect(args.vg, box.size.x, 0.0, aura_width, box.size.y);
+			nvgRect(args.vg, right, 0.0, aura_width, box.size.y);
 			nvgFill(args.vg);
 			nvgClosePath(args.vg);
 		}

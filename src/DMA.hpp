@@ -15,15 +15,40 @@ namespace sparkette {
 
 	template <typename T>
 	class DMAHost;
+
+	class DMAChannelBase {
+	protected:
+		std::size_t count = 0;
+		std::size_t columns = 1;
+		DMAChannelBase() = default;
+		DMAChannelBase(std::size_t count, std::size_t columns) : count(count), columns(columns) {}
+
+	public:
+		std::size_t size() const {
+			return count;
+		}
+		
+		std::size_t width() const {
+			if (columns == 0)
+				return count;
+			else
+				return columns;
+		}
+
+		std::size_t height() const {
+			if (columns == 0)
+				return 1;
+			else
+				return count / columns;
+		}
+	};
 	
 	template <typename T>
-	class DMAChannel {
+	class DMAChannel : public DMAChannelBase {
 	protected:
 		T *mem_start = nullptr;
 		DMAHost<T> *owner = nullptr;
-		std::size_t count = 0;
 		std::size_t stride = 1;
-		std::size_t columns = 1;
 
 		void signalDMAWrite(std::size_t index) {
 			if (owner) {
@@ -62,7 +87,7 @@ namespace sparkette {
 
 		DMAChannel() = default;
 		DMAChannel(DMAHost<T> *owner, T *mem_start, std::size_t count, std::size_t columns = 1, std::size_t stride = 1)
-			: owner(owner), mem_start(mem_start), count(count), stride(stride), columns(columns) {}
+			: owner(owner), mem_start(mem_start), stride(stride), DMAChannelBase(count, columns) {}
 		DMAChannel(const DMAChannel& other) = delete;
 		DMAChannel& operator=(const DMAChannel& other) = delete;
 
@@ -81,24 +106,6 @@ namespace sparkette {
 
 		void write(std::size_t col, std::size_t row, T value) {
 			write(columns * row + col, value);
-		}
-
-		std::size_t size() const {
-			return count;
-		}
-		
-		std::size_t width() const {
-			if (columns == 0)
-				return count;
-			else
-				return columns;
-		}
-
-		std::size_t height() const {
-			if (columns == 0)
-				return 1;
-			else
-				return count / columns;
 		}
 
 		DMAHost<T> *getOwner() const {

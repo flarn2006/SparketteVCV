@@ -197,6 +197,15 @@
       "tags": [
         "Blank"
       ]
+    },
+    {
+      "slug": "Reshape",
+      "name": "Reshape",
+      "description": "Adapter that provides a reshaped view of a DMA channel.",
+      "tags": [
+        "Expander",
+        "Utility"
+      ]
     }
   ]
 }

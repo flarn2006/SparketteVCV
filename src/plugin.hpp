@@ -29,3 +29,4 @@ extern Model* modelVoltageRange;
 extern Model* modelMicrocosm;
 extern Model* modelDMAFX;
 extern Model* modelAccessor;
+extern Model* modelReshape;

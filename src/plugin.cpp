@@ -29,6 +29,7 @@ void init(Plugin* p) {
 	p->addModel(modelMicrocosm);
 	p->addModel(modelDMAFX);
 	p->addModel(modelAccessor);
+	p->addModel(modelReshape);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.

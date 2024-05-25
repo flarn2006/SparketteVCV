@@ -80,9 +80,13 @@ public:
 		return value;
 	}
 
+	void refresh(float sampleTime = -1.0f) {
+		setValue(value, sampleTime);
+	}
+
 	void setColor(const std::vector<float> &color, float sampleTime = -1.0f) {
 		this->color = color;
-		setValue(value, sampleTime);
+		refresh(sampleTime);
 	}
 
 	void setColor(float brightness, float sampleTime = -1.0f) {
@@ -126,23 +130,47 @@ struct SevenSegments : LightCollection<char> {
 		constexpr int A=1, B=2, C=4, D=8, E=16, F=32, G=64;
 		switch (value) {
 			case '-': segments = G; break;
-			case '0': segments = A|B|C|D|E|F; break;
-			case '1': segments = B|C; break;
-			case '2': segments = A|B|D|E|G; break;
+			case '0': case 'O': segments = A|B|C|D|E|F; break;
+			case '1': case 'I': segments = B|C; break;
+			case '2': case 'Z': case 'z': segments = A|B|D|E|G; break;
 			case '3': segments = A|B|C|D|G; break;
 			case '4': segments = B|C|F|G; break;
-			case '5': segments = A|C|D|F|G; break;
+			case '5': case 'S': case 's': segments = A|C|D|F|G; break;
 			case '6': segments = A|C|D|E|F|G; break;
-			case '7': segments = A|B|C; break;
+			case '7': segments = A|B|C|F; break;
 			case '8': segments = A|B|C|D|E|F|G; break;
-			case '9': segments = A|B|C|D|F|G; break;
+			case '9': case 'g': segments = A|B|C|D|F|G; break;
 			case 'A': segments = A|B|C|E|F|G; break;
-			case 'b': segments = C|D|E|F|G; break;
+			case 'a': segments = A|B|C|D|E|G; break;
+			case 'B': case 'b': segments = C|D|E|F|G; break;
 			case 'C': segments = A|D|E|F; break;
 			case 'c': segments = D|E|G; break;
-			case 'd': segments = B|C|D|E|G; break;
+			case 'D': case 'd': segments = B|C|D|E|G; break;
 			case 'E': segments = A|D|E|F|G; break;
-			case 'F': segments = A|E|F|G; break;
+			case 'e': segments = A|B|D|E|F|G; break;
+			case 'F': case 'f': segments = A|E|F|G; break;
+			case 'G': segments = A|C|D|E|F; break;
+			case 'H': segments = B|C|E|F|G; break;
+			case 'h': segments = C|E|F|G; break;
+			case 'i': segments = C; break;
+			case 'J': segments = B|C|D|E; break;
+			case 'j': segments = B|C|D; break;
+			case 'L': segments = D|E|F; break;
+			case 'l': segments = E|F; break;
+			case 'M': case 'm': segments = A|C|E|G; break;
+			case 'N': segments = A|B|C|E|F; break;
+			case 'n': segments = C|E|G; break;
+			case 'o': segments = C|D|E|G; break;
+			case 'P': case 'p': segments = A|B|E|F|G; break;
+			case 'Q': segments = A|B|D|F|G; break;
+			case 'q': segments = A|B|C|F|G; break;
+			case 'R': case 'r': segments = E|G; break;
+			case 'T': case 't': segments = D|E|F|G; break;
+			case 'U': segments = B|C|D|E|F; break;
+			case 'u': segments = C|D|E; break;
+			case 'W': case 'w': segments = B|D|F|G; break;
+			case 'X': case 'x': segments = A|D|G; break;
+			case 'Y': case 'y': segments = B|C|D|F|G; break;
 		}
 		return ((segments >> segment) & 1) ? 1.f : 0.f;
 	}
@@ -169,7 +197,12 @@ public:
 
 	void setColor(const std::vector<float> &color, float sampleTime = -1.f) {
 		for (LightCollection<TChar> *lc : chars)
-			setColor(color, sampleTime);
+			lc->setColor(color, sampleTime);
+	}
+
+	void refresh(float sampleTime = -1.f) {
+		for (LightCollection<TChar> *lc : chars)
+			lc->refresh();
 	}
 
 	LightCollection<TChar> *getCharDisplay(std::size_t index) const {

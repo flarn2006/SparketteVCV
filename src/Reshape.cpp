@@ -6,23 +6,6 @@
 
 using namespace sparkette;
 
-struct ReshapeDisplay : TransparentWidget {
-	const DMAChannelBase *const *pDataSource = nullptr;
-
-	void drawLayer(const DrawArgs &args, int layer) override {
-		const double fontsize = 8.0;
-		if (layer == 1) {
-			const auto color = componentlibrary::SCHEME_BLUE;
-			if (pDataSource && *pDataSource) {
-				bndIconLabelValue(args.vg, 0.0, 0.0, box.size.x, box.size.y, -1, color, BND_CENTER, fontsize, string::f("%zu", (*pDataSource)->width()).c_str(), nullptr);
-			} else {
-				bndIconLabelValue(args.vg, 0.0, 0.0, box.size.x, box.size.y, -1, componentlibrary::SCHEME_RED, BND_CENTER, fontsize, pDataSource ? "CHANNEL\nNOT\nFOUND" : "NO HOST\nCONNECTED", nullptr);
-			}
-		}
-		TransparentWidget::drawLayer(args, layer);
-	}
-};
-
 struct Reshape : DMAExpanderModule<float, bool> {
 	enum ParamId {
 		CHANNEL_PARAM,
@@ -45,12 +28,22 @@ struct Reshape : DMAExpanderModule<float, bool> {
 		DMA_HOST_LIGHT_G,
 		DMA_HOST_LIGHT_R,
 		IN_WIDTH_A0,
-		LIGHTS_LEN = IN_WIDTH_A0 + 7*4
+		IN_HEIGHT_A0 = IN_WIDTH_A0 + 7*4,
+		OUT_WIDTH_A0 = IN_HEIGHT_A0 + 7*4,
+		OUT_HEIGHT_A0 = OUT_WIDTH_A0 + 7*4,
+		LIGHTS_LEN = OUT_HEIGHT_A0 + 7*4
+	};
+	enum DisplayId {
+		IN_WIDTH,
+		IN_HEIGHT,
+		OUT_WIDTH,
+		OUT_HEIGHT,
+		DISPLAYS_LEN
 	};
 
 	const DMAChannelBase *topDataSource = nullptr;
 	const DMAChannelBase *bottomDataSource = nullptr;
-	SegmentStringDisplay *in_width_disp = nullptr;
+	SegmentStringDisplay *displays[DISPLAYS_LEN];
 
 	Reshape() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -67,12 +60,16 @@ struct Reshape : DMAExpanderModule<float, bool> {
 		configInput(SHAPE_INPUT, "Shape");
 		dmaClientLightID = DMA_CLIENT_LIGHT;
 		dmaHostLightID = DMA_HOST_LIGHT_G;
+
+		for (int i=0; i<DISPLAYS_LEN; ++i)
+			displays[i] = nullptr;
 	}
 
 	void process(const ProcessArgs& args) override {
 		DMAExpanderModule<float, bool>::process(args);
-		if (in_width_disp)
-			in_width_disp->setString(string::f("%-4d", (int)(params[SHAPE_PARAM].getValue() * 1000)), args.sampleTime);
+		for (int i=0; i<DISPLAYS_LEN; ++i)
+			if (displays[i])
+				displays[i]->refresh(args.sampleTime);
 	}
 };
 
@@ -97,26 +94,37 @@ struct ReshapeWidget : ModuleWidget {
 		addChild(createLightCentered<SmallLight<BlueLight>>(Vec(8.0, 8.0), module, Reshape::DMA_CLIENT_LIGHT));
 		addChild(createLightCentered<SmallLight<GreenRedLight>>(Vec(box.size.x - 8.0, 8.0), module, Reshape::DMA_HOST_LIGHT_G));
 
-		// mm2px(Vec(15.24, 17.78))
-		/*auto widget = createWidget<ReshapeDisplay>(mm2px(Vec(2.54, 26.31)));
-		widget->box.size = mm2px(Vec(15.24, 17.78));
-		if (module)
-			widget->pDataSource = &module->topDataSource;
-		addChild(widget);*/
-
 		auto ssdw = new SegmentStringDisplayWidget(module, Reshape::IN_WIDTH_A0);
 		for (int i=0; i<4; ++i)
 			ssdw->createDigit<SevenSegments<TinySimpleSegmentH, TinySimpleSegmentV, GreenLight>>();
 		if (module)
-			module->in_width_disp = ssdw;
+			module->displays[Reshape::IN_WIDTH] = ssdw;
 		ssdw->setPosition(mm2px(Vec(3.54, 37.0)));
 		addChild(ssdw);
 
-		auto widget = createWidget<ReshapeDisplay>(mm2px(Vec(2.54, 96.212)));
-		widget->box.size = mm2px(Vec(15.24, 17.78));
+		ssdw = new SegmentStringDisplayWidget(module, Reshape::IN_HEIGHT_A0);
+		for (int i=0; i<4; ++i)
+			ssdw->createDigit<SevenSegments<TinySimpleSegmentH, TinySimpleSegmentV, GreenLight>>();
 		if (module)
-			widget->pDataSource = &module->bottomDataSource;
-		addChild(widget);
+			module->displays[Reshape::IN_HEIGHT] = ssdw;
+		ssdw->setPosition(mm2px(Vec(3.54, 47.8)));
+		addChild(ssdw);
+
+		ssdw = new SegmentStringDisplayWidget(module, Reshape::OUT_WIDTH_A0);
+		for (int i=0; i<4; ++i)
+			ssdw->createDigit<SevenSegments<TinySimpleSegmentH, TinySimpleSegmentV, GreenLight>>();
+		if (module)
+			module->displays[Reshape::OUT_WIDTH] = ssdw;
+		ssdw->setPosition(mm2px(Vec(3.54, 96.9)));
+		addChild(ssdw);
+
+		ssdw = new SegmentStringDisplayWidget(module, Reshape::OUT_HEIGHT_A0);
+		for (int i=0; i<4; ++i)
+			ssdw->createDigit<SevenSegments<TinySimpleSegmentH, TinySimpleSegmentV, GreenLight>>();
+		if (module)
+			module->displays[Reshape::OUT_HEIGHT] = ssdw;
+		ssdw->setPosition(mm2px(Vec(3.54, 107.7)));
+		addChild(ssdw);
 	}
 };
 

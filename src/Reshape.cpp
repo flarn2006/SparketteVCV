@@ -126,6 +126,14 @@ struct ReshapeWidget : ModuleWidget {
 		ssdw->setPosition(mm2px(Vec(3.54, 107.7)));
 		addChild(ssdw);
 	}
+
+	~ReshapeWidget() {
+		Reshape *m = dynamic_cast<Reshape*>(module);
+		if (m) {
+			for (int i=0; i<Reshape::DISPLAYS_LEN; ++i)
+				m->displays[i] = nullptr;
+		}
+	}
 };
 
 

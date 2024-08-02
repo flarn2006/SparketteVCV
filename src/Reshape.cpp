@@ -44,6 +44,8 @@ struct Reshape : DMAExpanderModule<float, bool> {
 	const DMAChannelBase *topDataSource = nullptr;
 	const DMAChannelBase *bottomDataSource = nullptr;
 	SegmentStringDisplay *displays[DISPLAYS_LEN];
+	std::vector<std::size_t> factors;
+	std::size_t channel_size;
 
 	Reshape() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -63,6 +65,12 @@ struct Reshape : DMAExpanderModule<float, bool> {
 
 		for (int i=0; i<DISPLAYS_LEN; ++i)
 			displays[i] = nullptr;
+	}
+
+	void updateFactors() {
+		factors.clear();
+		factors.push_back(1);
+		if (
 	}
 
 	void process(const ProcessArgs& args) override {

@@ -55,7 +55,8 @@ struct TrixieWidget : ModuleWidget {
 			double right = box.size.x + ((module->rightExpander.module && module->rightExpander.module->model == modelEllie) ? RACK_GRID_WIDTH*8 : 0.0);
 			float sine = std::sin(*pPhase * M_PI) + 1.f / 2;
 			double aura_width = 7.0 - (double)sine * 2;
-			nvgFillColor(args.vg, nvgRGBA(0x51, 0xff, 0xff, 0x60 + (int)(sine * 0x60)));
+			int aura_alpha = 0x60 + (int)(sine * 0x60);
+			nvgFillColor(args.vg, nvgRGBA(0x51, 0xff, 0xff, aura_alpha));
 
 			nvgBeginPath(args.vg);
 			nvgRect(args.vg, left-aura_width, -aura_width, right-left+2*aura_width, aura_width);
@@ -74,6 +75,12 @@ struct TrixieWidget : ModuleWidget {
 
 			nvgBeginPath(args.vg);
 			nvgRect(args.vg, right, 0.0, aura_width, box.size.y);
+			nvgFill(args.vg);
+			nvgClosePath(args.vg);
+
+			nvgFillColor(args.vg, nvgRGBA(0x51, 0xff, 0xff, aura_alpha - (int)(rack::settings::rackBrightness * aura_alpha)));
+			nvgBeginPath(args.vg);
+			nvgRect(args.vg, left, 0.0, right - left, box.size.y);
 			nvgFill(args.vg);
 			nvgClosePath(args.vg);
 		}
